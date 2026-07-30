@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -15,9 +16,18 @@ import {
   FileCheck2,
   Boxes,
   Percent,
+  Users,
+  Factory,
+  DollarSign,
+  Globe2,
+  Gauge,
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { Eyebrow, PrimaryButton, GhostButton, StatBlock } from "@/components/UI";
+import SupplierActions from "@/components/supplier/SupplierActions";
+import FactoryGallery from "@/components/supplier/FactoryGallery";
+import SupplierReviews from "@/components/supplier/SupplierReviews";
+import ProductShowcase from "@/components/supplier/ProductShowcase";
 import { suppliers, products } from "@/lib/data";
 
 export function generateStaticParams() {
@@ -63,17 +73,101 @@ function getSupplierCredentials(slug: string, rating: number | string, years: nu
   return { businessType, establishedYear, responseTimeHours, tier, certs };
 }
 
+// --- New mock data: company overview, gallery, reviews ---
+
+const EXPORT_REGIONS = [
+  ["North America", "Europe", "Southeast Asia"],
+  ["Middle East", "Africa", "South Asia"],
+  ["Europe", "Oceania", "East Asia"],
+  ["North America", "Latin America", "Middle East"],
+];
+
+function getCompanyOverview(slug: string, years: number) {
+  const h = hashString(slug);
+  const employeeBands = ["50-100", "100-200", "200-500", "500-1000", "1000+"];
+  const factorySizeBands = ["1,000-3,000 m²", "3,000-10,000 m²", "10,000-30,000 m²", "30,000-50,000 m²"];
+  const revenueBands = ["$2.5M - $5M", "$5M - $10M", "$10M - $25M", "$25M - $50M", "$50M+"];
+  const capacityBands = ["10,000 units/month", "25,000 units/month", "50,000 units/month", "100,000+ units/month"];
+
+  return {
+    employees: employeeBands[h % employeeBands.length],
+    factorySize: factorySizeBands[(h + years) % factorySizeBands.length],
+    annualRevenue: revenueBands[(h + 3) % revenueBands.length],
+    exportMarkets: EXPORT_REGIONS[h % EXPORT_REGIONS.length],
+    productionCapacity: capacityBands[(h + 5) % capacityBands.length],
+  };
+}
+
+function getGalleryItems(slug: string) {
+  const h = hashString(slug);
+  const seedImg = (n: number) => `https://picsum.photos/seed/${slug}-${n}/600/450`;
+  return [
+    { type: "factory" as const, src: seedImg(1), label: "Factory Floor" },
+    { type: "factory" as const, src: seedImg(2), label: "Production Line" },
+    { type: "factory" as const, src: seedImg(3), label: "Warehouse" },
+    { type: "certificate" as const, src: seedImg(4), label: "ISO 9001 Certificate" },
+    { type: "certificate" as const, src: seedImg(5), label: "CE Certificate" },
+    {
+      type: "video" as const,
+      src: seedImg(6),
+      label: "Factory Tour",
+      videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    },
+    { type: "factory" as const, src: seedImg(7), label: "Quality Control" },
+    { type: "factory" as const, src: seedImg(8), label: "Packing Area" },
+  ];
+}
+
+const REVIEW_NAMES = ["James Whitfield", "Amara Chen", "Diego Fernandez", "Fatima Al-Sayed", "Lucas Meyer", "Priya Nair", "Oliver Grant", "Sophia Rossi"];
+const REVIEW_COUNTRIES = ["United States", "Germany", "UAE", "Brazil", "Australia", "India", "United Kingdom", "Italy"];
+const REVIEW_COMMENTS = [
+  "Professional communication from first inquiry to final shipment. Products arrived exactly as specified.",
+  "Solid manufacturer with good QC. Minor delay on the second order but they kept us informed throughout.",
+  "Factory audit checked out and product quality has been consistent across three repeat orders.",
+  "Competitive pricing at volume and the sample process was fast. Would recommend for bulk sourcing.",
+  "Good documentation support for customs clearance. Packaging was export-grade and well protected.",
+  "Responsive account manager and transparent about lead times. No surprises on delivery.",
+];
+
+function getSupplierReviews(slug: string) {
+  const h = hashString(slug);
+  const count = 5 + (h % 4); // 5-8 reviews
+  return Array.from({ length: count }).map((_, i) => {
+    const seed = h + i * 17;
+    return {
+      name: REVIEW_NAMES[seed % REVIEW_NAMES.length],
+      country: REVIEW_COUNTRIES[seed % REVIEW_COUNTRIES.length],
+      rating: 3 + (seed % 3), // 3-5
+      date: `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"][seed % 7]} 2026`,
+      comment: REVIEW_COMMENTS[seed % REVIEW_COMMENTS.length],
+      helpful: seed % 24,
+      verifiedBuyer: seed % 3 !== 0,
+    };
+  });
+}
+
 export default function SupplierDetail({ params }: { params: { slug: string } }) {
   const supplier = suppliers.find((s) => s.slug === params.slug);
   if (!supplier) return notFound();
 
-  const catalog = products.filter((p) => p.supplierSlug === supplier.slug);
+  // Products matching this supplier directly, plus same-industry fallback so the
+  // showcase always has enough relevant items (6-8), never mixing in unrelated industries.
+  const directCatalog = products.filter((p) => p.supplierSlug === supplier.slug);
+  const sameIndustryCatalog = products.filter(
+    (p) => p.supplierSlug !== supplier.slug && p.industry.toLowerCase() === supplier.industry.toLowerCase()
+  );
+  const catalog = [...directCatalog, ...sameIndustryCatalog].slice(0, 8);
+
   const others = suppliers.filter((s) => s.slug !== supplier.slug).slice(0, 3);
   const { businessType, establishedYear, responseTimeHours, tier, certs } = getSupplierCredentials(
     supplier.slug,
     supplier.rating,
     supplier.years
   );
+  const overview = getCompanyOverview(supplier.slug, supplier.years);
+  const galleryItems = getGalleryItems(supplier.slug);
+  const reviews = getSupplierReviews(supplier.slug);
+  const numericRating = typeof supplier.rating === "string" ? parseFloat(supplier.rating) : supplier.rating;
 
   return (
     <div className="overflow-x-hidden">
@@ -145,6 +239,10 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
                     <Clock3 size={12} className="shrink-0" />
                     Typically responds within {responseTimeHours} hour{responseTimeHours > 1 ? "s" : ""}
                   </p>
+
+                  <div className="mt-4">
+                    <SupplierActions supplierName={supplier.name} />
+                  </div>
                 </div>
               </div>
 
@@ -177,6 +275,69 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
                 </div>
               </Reveal>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Company Overview */}
+      <section className="border-b border-line">
+        <div className="container-x py-8 sm:py-14 md:py-20">
+          <Reveal>
+            <Eyebrow>Company Overview</Eyebrow>
+          </Reveal>
+          <div className="mt-5 sm:mt-8 grid grid-cols-2 md:grid-cols-3 gap-px bg-line border border-line max-w-4xl">
+            {[
+              { icon: Users, label: "Employees", value: overview.employees },
+              { icon: Factory, label: "Factory Size", value: overview.factorySize },
+              { icon: DollarSign, label: "Annual Revenue", value: overview.annualRevenue },
+              { icon: Gauge, label: "Production Capacity", value: overview.productionCapacity },
+              { icon: Building2, label: "Business Type", value: businessType },
+              { icon: CalendarCheck, label: "Established", value: `${establishedYear}` },
+            ].map((item, idx) => (
+              <Reveal key={item.label} delay={idx * 0.05}>
+                <div className="bg-paper p-4 sm:p-5 h-full flex items-start gap-3">
+                  <item.icon size={16} className="text-smoke shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-xs sm:text-sm font-medium break-words">{item.value}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Export markets */}
+          <div className="mt-6 sm:mt-8 max-w-4xl">
+            <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-3 flex items-center gap-1.5">
+              <Globe2 size={13} /> Export Markets
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {overview.exportMarkets.map((region) => (
+                <span
+                  key={region}
+                  className="text-xs font-medium border border-line px-3 py-1.5 hover:border-ink/30 hover:bg-bone transition-colors"
+                >
+                  {region}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Factory & Company Gallery */}
+      <section className="border-b border-line bg-bone">
+        <div className="container-x py-8 sm:py-14 md:py-20">
+          <Reveal>
+            <Eyebrow>Factory & Company Gallery</Eyebrow>
+            <p className="mt-2 text-xs sm:text-sm text-smoke max-w-xl">
+              Facility photos, certification documents, and a factory walkthrough video.
+            </p>
+          </Reveal>
+          <div className="mt-5 sm:mt-8">
+            <FactoryGallery items={galleryItems} />
           </div>
         </div>
       </section>
@@ -220,34 +381,36 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
         </div>
       </section>
 
+      {/* Expanded Product Showcase (6-8 items, same industry, carousel on mobile / pagination on desktop) */}
       {catalog.length > 0 && (
         <section className="border-b border-line">
           <div className="container-x py-8 sm:py-14 md:py-20">
             <Reveal>
               <Eyebrow>Catalog</Eyebrow>
+              <p className="mt-2 text-xs sm:text-sm text-smoke max-w-xl">
+                Products from {supplier.name} and other {supplier.industry.toLowerCase()} listings on FAST.
+              </p>
             </Reveal>
-            <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border border-line">
-              {catalog.map((p, i) => (
-                <Reveal key={p.slug} delay={(i % 3) * 0.05}>
-                  <Link
-                    href={`/products/${p.slug}`}
-                    className="group block bg-paper p-4 sm:p-6 h-full card-hover border border-transparent transition-all duration-300 hover:border-ink/10 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
-                  >
-                    <span className="font-mono text-xs text-smoke">{p.code}</span>
-                    <h3 className="mt-3 font-display font-semibold leading-snug text-sm sm:text-base break-words">
-                      {p.name}
-                    </h3>
-                    <p className="mt-2 text-sm font-medium">{p.price}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest2 text-ink opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                      View product <ArrowUpRight size={13} />
-                    </span>
-                  </Link>
-                </Reveal>
-              ))}
+            <div className="mt-5 sm:mt-8">
+              <ProductShowcase
+                products={catalog.map((p) => ({ slug: p.slug, code: p.code, name: p.name, price: p.price }))}
+              />
             </div>
           </div>
         </section>
       )}
+
+      {/* Customer Reviews & Buyer Feedback */}
+      <section className="border-b border-line bg-bone">
+        <div className="container-x py-8 sm:py-14 md:py-20">
+          <Reveal>
+            <Eyebrow>Customer Reviews & Buyer Feedback</Eyebrow>
+          </Reveal>
+          <div className="mt-5 sm:mt-8">
+            <SupplierReviews reviews={reviews} averageRating={numericRating} reviewCount={reviews.length} />
+          </div>
+        </div>
+      </section>
 
       <section>
         <div className="container-x py-8 sm:py-14 md:py-20">

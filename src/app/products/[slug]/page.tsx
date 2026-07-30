@@ -14,9 +14,16 @@ import {
   Clock,
   Award,
   Globe2,
+  Factory,
 } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { Eyebrow, PrimaryButton, GhostButton } from "@/components/UI";
+import ProductGallery from "@/components/product/ProductGallery";
+import ProductActions from "@/components/product/ProductActions";
+import ReviewsSection from "@/components/product/ReviewsSection";
+import InquiryForm from "@/components/product/InquiryForm";
+import FrequentlyBoughtTogether from "@/components/product/FrequentlyBoughtTogether";
+import ShippingEstimator from "@/components/product/ShippingEstimator";
 import { products as mainProducts, suppliers } from "@/lib/data";
 import {
   machineryProducts,
@@ -176,6 +183,72 @@ function getShippingInfo(slug: string) {
   };
 }
 
+// --- New mock data for gallery, reviews, certifications, factory/packaging imagery ---
+
+function getGalleryItems(product: DetailedProduct) {
+  const h = hashString(product.slug);
+  const base = product.image;
+  const sep = base.includes("?") ? "&" : "?";
+  return [
+    { type: "image" as const, src: base, label: "Front View" },
+    { type: "image" as const, src: `${base}${sep}sig=${h % 89}`, label: "Side View" },
+    { type: "image" as const, src: `${base}${sep}sig=${(h + 37) % 89}`, label: "Packaging" },
+    {
+      type: "video" as const,
+      src: `${base}${sep}sig=${(h + 61) % 89}`,
+      label: "Product Video",
+      videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    },
+  ];
+}
+
+const REVIEW_NAMES = ["James Whitfield", "Amara Chen", "Diego Fernandez", "Fatima Al-Sayed", "Lucas Meyer", "Priya Nair", "Oliver Grant", "Sophia Rossi"];
+const REVIEW_COUNTRIES = ["United States", "Germany", "UAE", "Brazil", "Australia", "India", "United Kingdom", "Italy"];
+const REVIEW_COMMENTS = [
+  "Solid build quality and matched the spec sheet exactly. Communication with the supplier was smooth throughout.",
+  "Good value for the price tier. Packaging held up well during a long transit.",
+  "Delivered on time and the sample matched the bulk order. Would source again.",
+  "Minor delay in shipping but the supplier kept us updated and offered a partial credit.",
+  "Exactly what we needed for our production line. Documentation was thorough.",
+  "Quality control was consistent across the batch. No defects on inspection.",
+];
+
+function getReviews(slug: string) {
+  const h = hashString(slug);
+  const count = 5 + (h % 4); // 5-8 reviews
+  return Array.from({ length: count }).map((_, i) => {
+    const seed = h + i * 13;
+    return {
+      name: REVIEW_NAMES[seed % REVIEW_NAMES.length],
+      country: REVIEW_COUNTRIES[seed % REVIEW_COUNTRIES.length],
+      rating: 3 + (seed % 3), // 3-5
+      date: `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"][seed % 7]} 2026`,
+      comment: REVIEW_COMMENTS[seed % REVIEW_COMMENTS.length],
+      helpful: seed % 24,
+    };
+  });
+}
+
+const ALL_CERTIFICATIONS = ["ISO 9001", "CE", "RoHS", "SGS Tested", "BSCI Audited", "ISO 14001"];
+
+function getCertifications(slug: string) {
+  const h = hashString(slug);
+  const shuffled = [...ALL_CERTIFICATIONS].sort((a, b) => ((h + a.length) % 7) - ((h + b.length) % 7));
+  return shuffled.slice(0, 3 + (h % 2));
+}
+
+function getFactoryImages(product: DetailedProduct) {
+  const gallery = getGalleryItems(product).filter((g) => g.type === "image");
+  const labels = ["Factory Floor", "Production Line", "Warehouse"];
+  return gallery.map((g, i) => ({ src: g.src, label: labels[i % labels.length] }));
+}
+
+function getPackagingImages(product: DetailedProduct) {
+  const gallery = getGalleryItems(product).filter((g) => g.type === "image");
+  const labels = ["Export Carton", "Pallet Packaging", "Custom Branding"];
+  return gallery.map((g, i) => ({ src: g.src, label: labels[i % labels.length] }));
+}
+
 export default function ProductDetail({ params }: { params: { slug: string } }) {
   const all = getAllProducts();
   const product = all.find((p) => p.slug === params.slug);
@@ -195,6 +268,12 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
   const { rating, reviewCount, ordersCount, responseRate, responseTime } = getTrustSignals(product.slug);
   const priceTiers = getPriceTiers(product.price, product.moq);
   const shipping = getShippingInfo(product.slug);
+  const galleryItems = getGalleryItems(product);
+  const reviews = getReviews(product.slug);
+  const certifications = getCertifications(product.slug);
+  const factoryImages = getFactoryImages(product);
+  const packagingImages = getPackagingImages(product);
+  const seedHash = hashString(product.slug);
 
   return (
     <>
@@ -209,30 +288,10 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
           </nav>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-12">
-            {/* Image column: full width on mobile, capped/centered on tablet, natural width at lg+ */}
+            {/* Image column: gallery with zoom/lightbox + video */}
             <div className="lg:col-span-5">
               <div className="w-full max-w-sm sm:max-w-md mx-auto lg:max-w-none lg:mx-0">
-                <div className="aspect-square bg-bone border border-line flex items-center justify-center relative overflow-hidden group cursor-zoom-in">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    unoptimized
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 420px, 40vw"
-                    priority
-                  />
-                  {product.code && (
-                    <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-paper/90 px-2 py-1 font-mono text-[10px] sm:text-xs text-ink backdrop-blur-sm border border-line">
-                      {product.code}
-                    </span>
-                  )}
-                  {product.verified && (
-                    <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-paper/90 px-2 py-1 font-mono text-[10px] sm:text-xs text-emerald-700 flex items-center gap-1 backdrop-blur-sm border border-line">
-                      <BadgeCheck size={13} className="text-emerald-600 shrink-0" /> Verified
-                    </span>
-                  )}
-                </div>
+                <ProductGallery items={galleryItems} productName={product.name} />
 
                 {/* Trade assurance strip */}
                 <div className="mt-4 grid grid-cols-3 gap-px bg-line border border-line text-center">
@@ -342,6 +401,10 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                 )}
               </div>
 
+              <div className="mt-4">
+                <ProductActions productName={product.name} />
+              </div>
+
               <p className="mt-3 flex items-center gap-1.5 text-[11px] sm:text-xs text-smoke">
                 <Clock size={12} className="shrink-0" />
                 Typical response time: {responseTime} hour{responseTime > 1 ? "s" : ""}
@@ -405,17 +468,47 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
               </div>
             </div>
           </div>
+
+          {/* Packaging images */}
+          <div className="mt-6 sm:mt-8 max-w-3xl">
+            <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-3">
+              Packaging Gallery
+            </p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {packagingImages.map((img, i) => (
+                <div key={i} className="relative aspect-square border border-line overflow-hidden group">
+                  <Image
+                    src={img.src}
+                    alt={img.label}
+                    fill
+                    unoptimized
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="150px"
+                  />
+                  <span className="absolute bottom-0 inset-x-0 bg-ink/70 text-paper text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-center py-1">
+                    {img.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Shipping estimator */}
+          <div className="mt-6 sm:mt-8">
+            <ShippingEstimator seedHash={seedHash} originPort={shipping.port} />
+          </div>
         </div>
       </section>
 
       {/* Supplied By Section (Data-backed Supplier) */}
       {supplier && (
-        <section className="border-b border-line overflow-hidden">
+        <section className="border-b border-line bg-bone overflow-hidden">
           <div className="container-x py-8 sm:py-14 md:py-20">
             <Eyebrow>Supplied By</Eyebrow>
+
             <Link
               href={`/suppliers/${supplier.slug}`}
-              className="mt-5 sm:mt-6 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 border border-line p-4 sm:p-6 card-hover max-w-3xl"
+              className="mt-5 sm:mt-6 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 border border-line bg-paper p-4 sm:p-6 card-hover max-w-3xl"
             >
               <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                 <div className="w-9 h-9 sm:w-12 sm:h-12 bg-ink text-paper flex items-center justify-center font-display font-bold shrink-0 text-sm sm:text-base">
@@ -441,9 +534,105 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                 View profile <ArrowUpRight size={13} />
               </span>
             </Link>
+
+            {/* Extended supplier metrics */}
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-px bg-line border border-line max-w-3xl">
+              <div className="bg-paper p-3 sm:p-4 text-center">
+                <p className="font-display font-bold text-lg sm:text-xl">{supplier.years}</p>
+                <p className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke mt-0.5">Years Active</p>
+              </div>
+              <div className="bg-paper p-3 sm:p-4 text-center">
+                <p className="font-display font-bold text-lg sm:text-xl">{responseRate}%</p>
+                <p className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke mt-0.5">Response Rate</p>
+              </div>
+              <div className="bg-paper p-3 sm:p-4 text-center">
+                <p className="font-display font-bold text-lg sm:text-xl">{ordersCount.toLocaleString()}+</p>
+                <p className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke mt-0.5">Orders Completed</p>
+              </div>
+              <div className="bg-paper p-3 sm:p-4 text-center">
+                <p className="font-display font-bold text-lg sm:text-xl">{supplier.rating}</p>
+                <p className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke mt-0.5">Avg. Rating</p>
+              </div>
+            </div>
+
+            {/* Certifications */}
+            <div className="mt-6 max-w-3xl">
+              <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-3">
+                Certifications
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {certifications.map((cert) => (
+                  <span
+                    key={cert}
+                    className="inline-flex items-center gap-1.5 border border-line bg-paper px-3 py-1.5 text-xs font-mono"
+                  >
+                    <BadgeCheck size={13} className="text-emerald-600" /> {cert}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Factory images */}
+            <div className="mt-6 max-w-3xl">
+              <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-3 flex items-center gap-1.5">
+                <Factory size={13} /> Factory & Facilities
+              </p>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {factoryImages.map((img, i) => (
+                  <div key={i} className="relative aspect-[4/3] border border-line overflow-hidden group">
+                    <Image
+                      src={img.src}
+                      alt={img.label}
+                      fill
+                      unoptimized
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="150px"
+                    />
+                    <span className="absolute bottom-0 inset-x-0 bg-ink/70 text-paper text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-center py-1">
+                      {img.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       )}
+
+      {/* Frequently Bought Together */}
+      {related.length > 0 && (
+        <section className="border-b border-line overflow-hidden">
+          <div className="container-x py-8 sm:py-14 md:py-20">
+            <Eyebrow>Frequently Bought Together</Eyebrow>
+            <div className="mt-5 sm:mt-8">
+              <FrequentlyBoughtTogether
+                main={{ slug: product.slug, name: product.name, image: product.image, price: product.price }}
+                extras={related.slice(0, 2).map((r) => ({ slug: r.slug, name: r.name, image: r.image, price: r.price }))}
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Reviews & Inquiry */}
+      <section className="border-b border-line bg-bone overflow-hidden">
+        <div className="container-x py-8 sm:py-14 md:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+            <div>
+              <Eyebrow>Customer Reviews</Eyebrow>
+              <div className="mt-5 sm:mt-8">
+                <ReviewsSection reviews={reviews} averageRating={rating} reviewCount={reviewCount} />
+              </div>
+            </div>
+            <div>
+              <Eyebrow>Product Inquiry</Eyebrow>
+              <div className="mt-5 sm:mt-8">
+                <InquiryForm productName={product.name} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Related Products Section */}
       {related.length > 0 && (
