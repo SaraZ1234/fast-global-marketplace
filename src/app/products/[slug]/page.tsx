@@ -1,67 +1,335 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, ShieldCheck, MapPin, Star } from "lucide-react";
+import {
+  ArrowUpRight,
+  ShieldCheck,
+  MapPin,
+  Star,
+  BadgeCheck,
+  Truck,
+  CreditCard,
+  Package,
+  Clock,
+  Award,
+  Globe2,
+} from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { Eyebrow, PrimaryButton, GhostButton } from "@/components/UI";
-import { products, suppliers } from "@/lib/data";
+import { products as mainProducts, suppliers } from "@/lib/data";
+import {
+  machineryProducts,
+  medicalProducts,
+  electronicsProducts,
+  fashionProducts,
+  homeFurnitureProducts,
+} from "@/lib/homeProducts";
+
+// Fallback images for lib/data.ts items without explicit image paths
+const PRODUCT_IMAGES: Record<string, string> = {
+  "industrial-cnc-lathe-machine": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
+  "bluetooth-wireless-earbuds": "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=600&q=80",
+  "organic-cotton-t-shirts": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80",
+  "modular-office-desk-system": "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80",
+  "automotive-led-headlight-kit": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80",
+  "hyaluronic-acid-serum-oem": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80",
+};
+
+interface SpecItem {
+  label: string;
+  value: string;
+}
+
+interface DetailedProduct {
+  slug: string;
+  code?: string;
+  name: string;
+  industry: string;
+  description: string;
+  price: string;
+  moq: string;
+  leadTime: string;
+  image: string;
+  supplierSlug?: string;
+  supplierName?: string;
+  country?: string;
+  verified?: boolean;
+  specs: SpecItem[];
+}
+
+// Unified catalog gatherer
+function getAllProducts(): DetailedProduct[] {
+  const formattedMain: DetailedProduct[] = mainProducts.map((p) => ({
+    slug: p.slug,
+    code: p.code,
+    name: p.name,
+    industry: p.industry,
+    description: p.description || "High-quality wholesale product available for bulk order and custom branding.",
+    price: p.price,
+    moq: p.moq,
+    leadTime: p.leadTime || "15 - 30 Days",
+    image: PRODUCT_IMAGES[p.slug] || "https://picsum.photos/seed/default/600/600",
+    supplierSlug: p.supplierSlug,
+    specs: p.specs || [
+      { label: "Minimum Order Quantity", value: p.moq },
+      { label: "Pricing", value: p.price },
+      { label: "Category", value: p.industry },
+    ],
+  }));
+
+  const convertExtra = (list: any[], industryName: string): DetailedProduct[] =>
+    list.map((p) => {
+      const slug = p.id || p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      return {
+        slug,
+        code: p.id?.toUpperCase(),
+        name: p.name,
+        industry: industryName,
+        description: `${p.name} sourced directly from ${p.supplier || "verified global manufacturers"}. Meets industrial standards with complete quality certification.`,
+        price: p.price,
+        moq: p.moq || "Negotiable",
+        leadTime: "10 - 25 Days",
+        image: p.image,
+        supplierName: p.supplier,
+        country: p.country,
+        verified: p.verified,
+        specs: [
+          { label: "Supplier", value: p.supplier || "Verified Supplier" },
+          { label: "Origin Country", value: p.country || "Global" },
+          { label: "Minimum Order", value: p.moq || "Negotiable" },
+          { label: "Verification Status", value: p.verified ? "Verified Gold Supplier" : "Standard Supplier" },
+        ],
+      };
+    });
+
+  return [
+    ...formattedMain,
+    ...convertExtra(machineryProducts, "Machinery"),
+    ...convertExtra(medicalProducts, "Medical"),
+    ...convertExtra(electronicsProducts, "Electronics"),
+    ...convertExtra(fashionProducts, "Fashion"),
+    ...convertExtra(homeFurnitureProducts, "Home & Furniture"),
+  ];
+}
 
 export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+  const all = getAllProducts();
+  return all.map((p) => ({ slug: p.slug }));
 }
 
 export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const product = products.find((p) => p.slug === params.slug);
-  return { title: product ? product.name : "Product" };
+  const all = getAllProducts();
+  const product = all.find((p) => p.slug === params.slug);
+  return { title: product ? `${product.name} | Product Details` : "Product Details" };
+}
+
+// --- Deterministic trust / commerce signals (no client state required) ---
+
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getTrustSignals(slug: string) {
+  const h = hashString(slug);
+  const rating = Math.min(5, Math.round((3.6 + (h % 15) / 10) * 10) / 10); // 3.6 - 5.0
+  const reviewCount = 18 + (h % 480); // 18 - 497
+  const ordersCount = 50 + (h % 2000); // 50 - 2049
+  const responseRate = 88 + (h % 12); // 88% - 99%
+  const responseTime = 1 + (h % 6); // 1 - 6 hours
+  return { rating, reviewCount, ordersCount, responseRate, responseTime };
+}
+
+function parsePriceValue(price: string): number | null {
+  const match = price.replace(/,/g, "").match(/(\d+(\.\d+)?)/);
+  return match ? parseFloat(match[1]) : null;
+}
+
+function getPriceTiers(price: string, moq: string) {
+  const base = parsePriceValue(price);
+  if (base === null) return null;
+
+  const minQty = parsePriceValue(moq) ?? 1;
+  const tierQtys = [minQty, minQty * 5, minQty * 20];
+
+  return tierQtys.map((qty, idx) => ({
+    range: idx === tierQtys.length - 1 ? `${qty.toLocaleString()}+` : `${qty.toLocaleString()} - ${(tierQtys[idx + 1] - 1).toLocaleString()}`,
+    price: `$${(base * (1 - idx * 0.08)).toFixed(2)}`,
+  }));
+}
+
+function getShippingInfo(slug: string) {
+  const ports = ["Karachi Port", "Port Qasim", "Shanghai Port", "Shenzhen Port", "Guangzhou Port"];
+  const paymentTerms = ["T/T, L/C, Western Union", "T/T, PayPal, Escrow", "L/C, T/T, D/P"];
+  const packaging = ["Standard export carton", "Wooden crate, pallet-ready", "Custom branded packaging available"];
+  const h = hashString(slug);
+  return {
+    port: ports[h % ports.length],
+    payment: paymentTerms[h % paymentTerms.length],
+    packaging: packaging[h % packaging.length],
+    supplyAbility: `${(500 + (h % 9500)).toLocaleString()} units / month`,
+  };
 }
 
 export default function ProductDetail({ params }: { params: { slug: string } }) {
-  const product = products.find((p) => p.slug === params.slug);
+  const all = getAllProducts();
+  const product = all.find((p) => p.slug === params.slug);
+
   if (!product) return notFound();
 
-  const supplier = suppliers.find((s) => s.slug === product.supplierSlug);
-  const related = products.filter((p) => p.slug !== product.slug && p.industry === product.industry).slice(0, 3);
+  // Matched supplier logic
+  const supplier = product.supplierSlug
+    ? suppliers.find((s) => s.slug === product.supplierSlug)
+    : null;
+
+  // Related products from same category
+  const related = all
+    .filter((p) => p.slug !== product.slug && p.industry.toLowerCase() === product.industry.toLowerCase())
+    .slice(0, 3);
+
+  const { rating, reviewCount, ordersCount, responseRate, responseTime } = getTrustSignals(product.slug);
+  const priceTiers = getPriceTiers(product.price, product.moq);
+  const shipping = getShippingInfo(product.slug);
 
   return (
     <>
       <section className="border-b border-line overflow-hidden">
-        <div className="container-x py-10 sm:py-14 md:py-20">
-          <nav className="text-[11px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-6 sm:mb-8 flex flex-wrap items-center gap-1">
+        <div className="container-x py-8 sm:py-14 md:py-20">
+          <nav className="text-[11px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-5 sm:mb-8 flex flex-wrap items-center gap-1">
+            <Link href="/" className="hover:text-ink">Home</Link>
+            <span className="mx-1">/</span>
             <Link href="/products" className="hover:text-ink">Products</Link>
             <span className="mx-1">/</span>
             <span className="text-ink break-words">{product.industry}</span>
           </nav>
 
-          <div className="grid lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 lg:gap-12">
+            {/* Image column: full width on mobile, capped/centered on tablet, natural width at lg+ */}
             <div className="lg:col-span-5">
-              <div className="aspect-square bg-bone border border-line flex items-center justify-center">
-                <span className="font-mono text-xs sm:text-sm text-smoke">{product.code}</span>
+              <div className="w-full max-w-sm sm:max-w-md mx-auto lg:max-w-none lg:mx-0">
+                <div className="aspect-square bg-bone border border-line flex items-center justify-center relative overflow-hidden group cursor-zoom-in">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    unoptimized
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 90vw, (max-width: 1024px) 420px, 40vw"
+                    priority
+                  />
+                  {product.code && (
+                    <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-paper/90 px-2 py-1 font-mono text-[10px] sm:text-xs text-ink backdrop-blur-sm border border-line">
+                      {product.code}
+                    </span>
+                  )}
+                  {product.verified && (
+                    <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-paper/90 px-2 py-1 font-mono text-[10px] sm:text-xs text-emerald-700 flex items-center gap-1 backdrop-blur-sm border border-line">
+                      <BadgeCheck size={13} className="text-emerald-600 shrink-0" /> Verified
+                    </span>
+                  )}
+                </div>
+
+                {/* Trade assurance strip */}
+                <div className="mt-4 grid grid-cols-3 gap-px bg-line border border-line text-center">
+                  <div className="bg-paper py-2.5 sm:py-3 px-1.5 sm:px-2 flex flex-col items-center gap-1 sm:gap-1.5">
+                    <ShieldCheck size={15} className="text-emerald-600 shrink-0" />
+                    <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke leading-tight">
+                      Trade<br />Assurance
+                    </span>
+                  </div>
+                  <div className="bg-paper py-2.5 sm:py-3 px-1.5 sm:px-2 flex flex-col items-center gap-1 sm:gap-1.5">
+                    <Award size={15} className="text-ink shrink-0" />
+                    <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke leading-tight">
+                      Quality<br />Certified
+                    </span>
+                  </div>
+                  <div className="bg-paper py-2.5 sm:py-3 px-1.5 sm:px-2 flex flex-col items-center gap-1 sm:gap-1.5">
+                    <Truck size={15} className="text-ink shrink-0" />
+                    <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke leading-tight">
+                      On-Time<br />Delivery
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="lg:col-span-7 min-w-0">
               <Eyebrow>{product.industry}</Eyebrow>
-              <h1 className="mt-4 font-display font-bold text-2xl sm:text-3xl md:text-4xl tracking-tightest break-words">
+              <h1 className="mt-3 sm:mt-4 font-display font-bold text-xl xs:text-2xl sm:text-3xl md:text-4xl tracking-tightest break-words">
                 {product.name}
               </h1>
+
+              {/* Rating + orders row */}
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 text-xs sm:text-sm">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        size={12}
+                        className={`shrink-0 ${i < Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-line"}`}
+                      />
+                    ))}
+                  </span>
+                  <span className="font-medium text-ink">{rating.toFixed(1)}</span>
+                  <span className="text-smoke">({reviewCount})</span>
+                </span>
+                <span className="text-smoke hidden sm:inline">•</span>
+                <span className="text-smoke">{ordersCount.toLocaleString()}+ orders</span>
+                <span className="text-smoke hidden sm:inline">•</span>
+                <span className="text-smoke">{responseRate}% response rate</span>
+              </div>
+
+              {(product.supplierName || product.country) && (
+                <p className="mt-3 text-[11px] sm:text-xs font-mono text-smoke uppercase tracking-wider break-words">
+                  Supplier: {product.supplierName} {product.country ? `(${product.country})` : ""}
+                </p>
+              )}
+
               <p className="mt-4 sm:mt-5 text-ash leading-relaxed max-w-xl text-sm sm:text-base">
                 {product.description}
               </p>
 
-              <div className="mt-6 sm:mt-8 grid grid-cols-3 gap-3 sm:gap-6 border-y border-line py-5 sm:py-6 max-w-md">
+              <div className="mt-6 sm:mt-8 grid grid-cols-3 gap-2 xs:gap-3 sm:gap-6 border-y border-line py-4 sm:py-6 max-w-md">
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Price</p>
-                  <p className="mt-1 font-medium text-sm sm:text-base break-words">{product.price}</p>
+                  <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Price</p>
+                  <p className="mt-1 font-medium text-xs sm:text-base break-words">{product.price}</p>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">MOQ</p>
-                  <p className="mt-1 font-medium text-sm sm:text-base break-words">{product.moq}</p>
+                  <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">MOQ</p>
+                  <p className="mt-1 font-medium text-xs sm:text-base break-words">{product.moq}</p>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Lead Time</p>
-                  <p className="mt-1 font-medium text-sm sm:text-base break-words">{product.leadTime}</p>
+                  <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Lead Time</p>
+                  <p className="mt-1 font-medium text-xs sm:text-base break-words">{product.leadTime}</p>
                 </div>
               </div>
+
+              {/* Bulk pricing tiers */}
+              {priceTiers && (
+                <div className="mt-6 sm:mt-8 w-full max-w-md">
+                  <p className="text-[10px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-3">
+                    Bulk Pricing
+                  </p>
+                  <div className="border border-line divide-y divide-line overflow-hidden">
+                    <div className="grid grid-cols-2 bg-bone px-3 sm:px-4 py-2">
+                      <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke">Quantity (pcs)</span>
+                      <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke text-right">Price / Unit</span>
+                    </div>
+                    {priceTiers.map((tier, idx) => (
+                      <div key={idx} className="grid grid-cols-2 px-3 sm:px-4 py-2.5">
+                        <span className="text-xs sm:text-sm break-words pr-2">{tier.range}</span>
+                        <span className="text-xs sm:text-sm font-medium text-right shrink-0">{tier.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4">
                 <PrimaryButton href="/contact" icon={ArrowUpRight}>
@@ -73,57 +341,103 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                   </GhostButton>
                 )}
               </div>
+
+              <p className="mt-3 flex items-center gap-1.5 text-[11px] sm:text-xs text-smoke">
+                <Clock size={12} className="shrink-0" />
+                Typical response time: {responseTime} hour{responseTime > 1 ? "s" : ""}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-line bg-bone overflow-hidden">
-        <div className="container-x py-10 sm:py-14 md:py-20">
-          <Eyebrow>Specifications</Eyebrow>
-          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line max-w-3xl">
-            {product.specs.map((s) => (
-              <div
-                key={s.label}
-                className="bg-paper p-4 sm:p-5 flex items-center justify-between gap-3 sm:gap-4"
-              >
-                <span className="text-xs sm:text-sm text-smoke">{s.label}</span>
-                <span className="text-xs sm:text-sm font-medium text-right break-words">{s.value}</span>
+      {/* Specifications */}
+      {product.specs && product.specs.length > 0 && (
+        <section className="border-b border-line bg-bone overflow-hidden">
+          <div className="container-x py-8 sm:py-14 md:py-20">
+            <Eyebrow>Specifications</Eyebrow>
+            <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line max-w-3xl">
+              {product.specs.map((s, idx) => (
+                <div
+                  key={`${s.label}-${idx}`}
+                  className="bg-paper p-4 sm:p-5 flex items-center justify-between gap-3 sm:gap-4"
+                >
+                  <span className="text-xs sm:text-sm text-smoke shrink-0">{s.label}</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-words">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Shipping & Payment */}
+      <section className="border-b border-line overflow-hidden">
+        <div className="container-x py-8 sm:py-14 md:py-20">
+          <Eyebrow>Shipping & Payment</Eyebrow>
+          <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line max-w-3xl">
+            <div className="bg-paper p-4 sm:p-5 flex items-start gap-3">
+              <Globe2 size={16} className="text-smoke shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Port of Loading</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium break-words">{shipping.port}</p>
               </div>
-            ))}
+            </div>
+            <div className="bg-paper p-4 sm:p-5 flex items-start gap-3">
+              <CreditCard size={16} className="text-smoke shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Payment Terms</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium break-words">{shipping.payment}</p>
+              </div>
+            </div>
+            <div className="bg-paper p-4 sm:p-5 flex items-start gap-3">
+              <Package size={16} className="text-smoke shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Packaging</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium break-words">{shipping.packaging}</p>
+              </div>
+            </div>
+            <div className="bg-paper p-4 sm:p-5 flex items-start gap-3">
+              <Truck size={16} className="text-smoke shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Supply Ability</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium break-words">{shipping.supplyAbility}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Supplied By Section (Data-backed Supplier) */}
       {supplier && (
         <section className="border-b border-line overflow-hidden">
-          <div className="container-x py-10 sm:py-14 md:py-20">
+          <div className="container-x py-8 sm:py-14 md:py-20">
             <Eyebrow>Supplied By</Eyebrow>
             <Link
               href={`/suppliers/${supplier.slug}`}
-              className="mt-6 group flex flex-col sm:flex-row sm:items-center justify-between gap-5 sm:gap-6 border border-line p-5 sm:p-6 card-hover max-w-3xl"
+              className="mt-5 sm:mt-6 group flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6 border border-line p-4 sm:p-6 card-hover max-w-3xl"
             >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-ink text-paper flex items-center justify-center font-display font-bold shrink-0">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div className="w-9 h-9 sm:w-12 sm:h-12 bg-ink text-paper flex items-center justify-center font-display font-bold shrink-0 text-sm sm:text-base">
                   {supplier.name.charAt(0)}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-display font-semibold break-words">{supplier.name}</h3>
-                    {supplier.verified && <ShieldCheck size={15} className="shrink-0" />}
+                    <h3 className="font-display font-semibold text-sm sm:text-base break-words">{supplier.name}</h3>
+                    {supplier.verified && <ShieldCheck size={14} className="shrink-0" />}
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ash font-mono">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[11px] sm:text-xs text-ash font-mono">
                     <span className="inline-flex items-center gap-1">
-                      <MapPin size={12} className="shrink-0" /> {supplier.country}
+                      <MapPin size={11} className="shrink-0" /> {supplier.country}
                     </span>
                     <span className="inline-flex items-center gap-1">
-                      <Star size={12} className="shrink-0" /> {supplier.rating}
+                      <Star size={11} className="shrink-0" /> {supplier.rating}
                     </span>
                     <span>{supplier.years} yrs on FAST</span>
                   </div>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono uppercase tracking-widest2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
                 View profile <ArrowUpRight size={13} />
               </span>
             </Link>
@@ -131,29 +445,61 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
         </section>
       )}
 
+      {/* Related Products Section */}
       {related.length > 0 && (
         <section className="overflow-hidden">
-          <div className="container-x py-10 sm:py-14 md:py-20">
+          <div className="container-x py-8 sm:py-14 md:py-20">
             <Eyebrow>More in {product.industry}</Eyebrow>
-            <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border border-line">
+            <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border border-line">
               {related.map((r) => (
                 <Link
                   key={r.slug}
                   href={`/products/${r.slug}`}
-                  className="group block bg-paper p-5 sm:p-6 card-hover border border-transparent min-w-0"
+                  className="group block bg-paper p-4 sm:p-6 card-hover border border-transparent min-w-0 flex flex-col justify-between"
                 >
-                  <span className="font-mono text-xs text-smoke">{r.code}</span>
-                  <h3 className="mt-3 font-display font-semibold leading-snug break-words">{r.name}</h3>
-                  <p className="mt-2 text-sm font-medium">{r.price}</p>
-                  <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    View <ArrowUpRight size={13} />
-                  </span>
+                  <div>
+                    <div className="aspect-[4/3] bg-bone border border-line mb-4 relative overflow-hidden">
+                      <Image
+                        src={r.image}
+                        alt={r.name}
+                        fill
+                        unoptimized
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
+                    {r.code && <span className="font-mono text-xs text-smoke">{r.code}</span>}
+                    <h3 className="mt-2 font-display font-semibold leading-snug text-sm sm:text-base break-words">{r.name}</h3>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-2">
+                    <p className="text-xs sm:text-sm font-medium">{r.price}</p>
+                    <span className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-mono uppercase tracking-widest2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      View <ArrowUpRight size={13} />
+                    </span>
+                  </div>
                 </Link>
               ))}
             </div>
           </div>
         </section>
       )}
+
+      {/* Spacer so fixed mobile CTA bar never overlaps the last section's content */}
+      <div className="lg:hidden h-24" aria-hidden="true" />
+
+      {/* Sticky mobile CTA bar */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper border-t border-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] font-mono uppercase tracking-widest2 text-smoke">Price</p>
+          <p className="text-xs sm:text-sm font-medium truncate">{product.price}</p>
+        </div>
+        <div className="shrink-0">
+          <PrimaryButton href="/contact" icon={ArrowUpRight}>
+            <span className="hidden xs:inline">Request Quotation</span>
+            <span className="xs:hidden">Get Quote</span>
+          </PrimaryButton>
+        </div>
+      </div>
     </>
   );
 }

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowRight, ShieldCheck, Globe2, Search } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import Ticker from "@/components/Ticker";
+import IndustrySidebar, { IndustrySidebarMobile } from "@/components/IndustrySidebar";
+import ProductSection from "@/components/ProductSection";
+import TradeConfidence from "@/components/TradeConfidence";
+import LogisticsPartners from "@/components/LogisticsPartners";
 import {
   industries,
   buyerFeatures,
@@ -10,6 +14,13 @@ import {
   whyChooseUs,
   faqs,
 } from "@/lib/data";
+import {
+  machineryProducts,
+  medicalProducts,
+  electronicsProducts,
+  fashionProducts,
+  homeFurnitureProducts,
+} from "@/lib/homeProducts";
 import {
   Eyebrow,
   SectionHeading,
@@ -26,68 +37,76 @@ export default function Home() {
       <section className="relative border-b border-line overflow-hidden">
         <div className="absolute inset-0 grid-paper opacity-[0.035] pointer-events-none" />
         <div className="container-x relative py-14 sm:py-20 md:py-28 lg:py-32">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-end">
-            <div className="lg:col-span-8">
-              <Reveal>
-                <Eyebrow>Global B2B &amp; B2C Trade Network</Eyebrow>
-              </Reveal>
-              <Reveal delay={0.05}>
-                <h1 className="mt-5 sm:mt-6 font-display font-bold leading-[0.95] tracking-tightest text-[clamp(2.25rem,9vw,3.75rem)] sm:text-[clamp(2.75rem,7vw,4.5rem)] md:text-7xl lg:text-8xl break-words">
-                  The Global
-                  <br />
-                  Wholesale
-                  <br />
-                  Marketplace.
-                </h1>
-              </Reveal>
-              <Reveal delay={0.15}>
-                <p className="mt-6 sm:mt-8 text-ash text-base sm:text-lg leading-relaxed max-w-xl">
-                  Buy directly from verified manufacturers, exporters, wholesalers,
-                  distributors, and trusted suppliers across ten industries. Source for
-                  your business or shop for personal needs — one platform, worldwide.
-                </p>
-              </Reveal>
-              <Reveal delay={0.25}>
-                <div className="mt-8 sm:mt-10 flex flex-wrap gap-3 sm:gap-4">
-                  <PrimaryButton href="/products" icon={ArrowUpRight}>
-                    Start Buying
-                  </PrimaryButton>
-                  <GhostButton href="/sell" icon={ArrowRight}>
-                    Become a Seller
-                  </GhostButton>
-                </div>
-                <div className="mt-5 sm:mt-6 flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-2 text-sm text-ash">
-                  <Link href="/contact" className="underline underline-offset-4 hover:text-ink">
-                    Request Quotation
-                  </Link>
-                  <Link href="/industries" className="underline underline-offset-4 hover:text-ink">
-                    Browse Categories
-                  </Link>
-                </div>
-              </Reveal>
+          {/* Mobile / tablet: horizontal industry scroller above the hero copy */}
+          <IndustrySidebarMobile />
 
-              {/* Stat strip for mobile/tablet — mirrors the desktop panel so stats never disappear below lg */}
-              <Reveal delay={0.3}>
-                <div className="mt-9 sm:mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 border-t border-line pt-6 lg:hidden">
-                  <StatBlock value="9.6M" label="Products" />
-                  <StatBlock value="182K+" label="Suppliers" />
-                  <StatBlock value="190" label="Countries" />
-                  <StatBlock value="10" label="Industries" />
-                </div>
-              </Reveal>
-            </div>
+          <div className="flex flex-col lg:flex-row gap-8 sm:gap-10 lg:items-stretch">
+            {/* Desktop: vertical industry sidebar */}
+            <IndustrySidebar />
 
-            <div className="lg:col-span-4 hidden lg:block">
-              <Reveal delay={0.3}>
-                <div className="border border-ink p-6">
-                  <div className="grid grid-cols-2 gap-6">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-end">
+              <div className="lg:col-span-8">
+                <Reveal>
+                  <Eyebrow>Global B2B &amp; B2C Trade Network</Eyebrow>
+                </Reveal>
+                <Reveal delay={0.05}>
+                  <h1 className="mt-5 sm:mt-6 font-display font-bold leading-[0.95] tracking-tightest text-[clamp(2.25rem,9vw,3.75rem)] sm:text-[clamp(2.75rem,7vw,4.5rem)] md:text-7xl lg:text-8xl break-words">
+                    The Global
+                    <br />
+                    Wholesale
+                    <br />
+                    Marketplace.
+                  </h1>
+                </Reveal>
+                <Reveal delay={0.15}>
+                  <p className="mt-6 sm:mt-8 text-ash text-base sm:text-lg leading-relaxed max-w-xl">
+                    Buy directly from verified manufacturers, exporters, wholesalers,
+                    distributors, and trusted suppliers across ten industries. Source for
+                    your business or shop for personal needs — one platform, worldwide.
+                  </p>
+                </Reveal>
+                <Reveal delay={0.25}>
+                  <div className="mt-8 sm:mt-10 flex flex-wrap gap-3 sm:gap-4">
+                    <PrimaryButton href="/products" icon={ArrowUpRight}>
+                      Start Buying
+                    </PrimaryButton>
+                    <GhostButton href="/sell" icon={ArrowRight}>
+                      Become a Seller
+                    </GhostButton>
+                  </div>
+                  <div className="mt-5 sm:mt-6 flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-2 text-sm text-ash">
+                    <Link href="/contact" className="underline underline-offset-4 hover:text-ink">
+                      Request Quotation
+                    </Link>
+                    <Link href="/industries" className="underline underline-offset-4 hover:text-ink">
+                      Browse Categories
+                    </Link>
+                  </div>
+                </Reveal>
+
+                {/* Stat strip for mobile/tablet — mirrors the desktop panel so stats never disappear below lg */}
+                <Reveal delay={0.3}>
+                  <div className="mt-9 sm:mt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 border-t border-line pt-6 lg:hidden">
                     <StatBlock value="9.6M" label="Products" />
                     <StatBlock value="182K+" label="Suppliers" />
                     <StatBlock value="190" label="Countries" />
                     <StatBlock value="10" label="Industries" />
                   </div>
-                </div>
-              </Reveal>
+                </Reveal>
+              </div>
+
+              <div className="lg:col-span-4 hidden lg:block">
+                <Reveal delay={0.3}>
+                  <div className="border border-ink p-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <StatBlock value="9.6M" label="Products" />
+                      <StatBlock value="182K+" label="Suppliers" />
+                      <StatBlock value="190" label="Countries" />
+                      <StatBlock value="10" label="Industries" />
+                    </div>
+                  </div>
+                </Reveal>
+              </div>
             </div>
           </div>
         </div>
@@ -175,6 +194,47 @@ export default function Home() {
         </div>
       </section>
 
+      {/* INDUSTRY PRODUCT SECTIONS */}
+      <ProductSection
+        eyebrow="Machinery"
+        title="Top Picks in Machinery"
+        description="Industrial equipment and machine tools from verified manufacturers."
+        products={machineryProducts}
+        viewAllHref="/industries/machinery"
+      />
+
+      <ProductSection
+        eyebrow="Medical"
+        title="Recommended Medical Supplies"
+        description="Devices and consumables sourced from trusted medical suppliers."
+        products={medicalProducts}
+        viewAllHref="/industries/medical"
+      />
+
+      <ProductSection
+        eyebrow="Electronics"
+        title="Trending Electronics"
+        description="Consumer and industrial electronics moving fastest this week."
+        products={electronicsProducts}
+        viewAllHref="/industries/electronics"
+      />
+
+      <ProductSection
+        eyebrow="Fashion"
+        title="Popular Fashion"
+        description="Apparel and accessories from garment manufacturers worldwide."
+        products={fashionProducts}
+        viewAllHref="/industries/fashion"
+      />
+
+      <ProductSection
+        eyebrow="Home & Furniture"
+        title="Home & Furniture Essentials"
+        description="Furniture, decor, and household goods for every space."
+        products={homeFurnitureProducts}
+        viewAllHref="/industries/home-furniture"
+      />
+
       {/* BUYER / SELLER FEATURES */}
       <section className="border-b border-line">
         <div className="container-x py-14 sm:py-20 md:py-28">
@@ -236,6 +296,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* TRADE WITH CONFIDENCE */}
+      <TradeConfidence />
+
+      {/* LOGISTICS PARTNERS */}
+      <LogisticsPartners />
 
       {/* WHY CHOOSE US */}
       <section className="border-b border-line">
