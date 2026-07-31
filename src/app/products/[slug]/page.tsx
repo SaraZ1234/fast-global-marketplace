@@ -277,7 +277,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
 
   return (
     <>
-      <section className="border-b border-line overflow-hidden">
+      <section className="border-b border-line bg-paper overflow-hidden">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <nav className="text-[11px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-5 sm:mb-8 flex flex-wrap items-center gap-1">
             <Link href="/" className="hover:text-ink">Home</Link>
@@ -295,7 +295,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
 
                 {/* Trade assurance strip */}
                 <div className="mt-4 grid grid-cols-3 gap-px bg-line border border-line text-center">
-                  <div className="bg-paper py-2.5 sm:py-3 px-1.5 sm:px-2 flex flex-col items-center gap-1 sm:gap-1.5">
+                  <div className="bg-bone py-2.5 sm:py-3 px-1.5 sm:px-2 flex flex-col items-center gap-1 sm:gap-1.5">
                     <ShieldCheck size={15} className="text-emerald-600 shrink-0" />
                     <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wide text-smoke leading-tight">
                       Trade<br />Assurance
@@ -435,11 +435,11 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
       )}
 
       {/* Shipping & Payment */}
-      <section className="border-b border-line overflow-hidden">
+      <section className="border-b border-line bg-paper overflow-hidden">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <Eyebrow>Shipping & Payment</Eyebrow>
           <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line max-w-3xl">
-            <div className="bg-paper p-4 sm:p-5 flex items-start gap-3">
+            <div className="bg-bone p-4 sm:p-5 flex items-start gap-3">
               <Globe2 size={16} className="text-smoke shrink-0 mt-0.5" />
               <div className="min-w-0">
                 <p className="text-[9px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke">Port of Loading</p>
@@ -601,7 +601,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
 
       {/* Frequently Bought Together */}
       {related.length > 0 && (
-        <section className="border-b border-line overflow-hidden">
+        <section className="border-b border-line bg-paper overflow-hidden">
           <div className="container-x py-8 sm:py-14 md:py-20">
             <Eyebrow>Frequently Bought Together</Eyebrow>
             <div className="mt-5 sm:mt-8">
@@ -636,7 +636,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
 
       {/* Related Products Section */}
       {related.length > 0 && (
-        <section className="overflow-hidden">
+        <section className="bg-paper overflow-hidden">
           <div className="container-x py-8 sm:py-14 md:py-20">
             <Eyebrow>More in {product.industry}</Eyebrow>
             <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border border-line">
@@ -644,7 +644,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                 <Link
                   key={r.slug}
                   href={`/products/${r.slug}`}
-                  className="group block bg-paper p-4 sm:p-6 card-hover border border-transparent min-w-0 flex flex-col justify-between"
+                  className="group block bg-bone p-4 sm:p-6 card-hover border border-transparent min-w-0 flex flex-col justify-between"
                 >
                   <div>
                     <div className="aspect-[4/3] bg-bone border border-line mb-4 relative overflow-hidden">

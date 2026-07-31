@@ -17,7 +17,7 @@ export default function PressPage() {
         title="News and announcements."
         description="Updates on product launches, milestones, and company news."
       />
-      <section className="overflow-hidden">
+      <section className="bg-paper overflow-hidden">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <SectionHeading eyebrow="Newsroom" title="Latest releases." />
           <div className="mt-8 sm:mt-10 divide-y divide-line border-t border-b border-line max-w-2xl">

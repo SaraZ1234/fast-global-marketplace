@@ -41,7 +41,7 @@ export default function ContactPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line border border-line">
             {stats.map((s, idx) => (
               <Reveal key={s.label} delay={idx * 0.06}>
-                <div className="bg-bone px-3 py-4 sm:px-5 sm:py-5 flex flex-col items-center text-center gap-1.5 sm:gap-2">
+                <div className="bg-paper px-3 py-4 sm:px-5 sm:py-5 flex flex-col items-center text-center gap-1.5 sm:gap-2">
                   <s.icon size={16} className="text-ink shrink-0 sm:size-[18px]" />
                   <p className="font-display font-bold text-base sm:text-xl tracking-tightest">{s.value}</p>
                   <p className="text-[9px] sm:text-[11px] font-mono uppercase tracking-widest2 text-smoke leading-tight">
@@ -54,7 +54,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section>
+      <section className="bg-paper">
         <div className="container-x py-10 sm:py-16 md:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-14">
             <div className="lg:col-span-7">

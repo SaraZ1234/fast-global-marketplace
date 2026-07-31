@@ -43,7 +43,7 @@ export default function SellPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <SectionHeading eyebrow="Onboarding" title="Four steps to your first order." />
           <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line">
@@ -70,7 +70,7 @@ export default function SellPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-paper">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-14 items-start">
             <Reveal>
@@ -90,7 +90,7 @@ export default function SellPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden">
+      <section className="relative bg-paper overflow-hidden">
         <div
           aria-hidden
           className="motion-safe:animate-pulse pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-ink/[0.06] blur-3xl"

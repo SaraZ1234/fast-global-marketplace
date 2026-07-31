@@ -44,7 +44,7 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
 
   return (
     <div className="overflow-x-hidden">
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-paper">
         <div className="container-x py-10 sm:py-20 md:py-28">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-6 sm:mb-8 hidden sm:block">
@@ -151,7 +151,7 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
         </div>
       </section>
 
-      <section>
+      <section className="bg-bone">
         <div className="container-x py-10 sm:py-16 md:py-20">
           <Eyebrow>Related Industries</Eyebrow>
           <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-px bg-line border border-line">

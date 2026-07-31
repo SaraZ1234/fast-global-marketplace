@@ -80,7 +80,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-paper">
         <div className="container-x py-10 sm:py-16 md:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-14">
             <Reveal>
@@ -144,7 +144,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-10 sm:py-16 md:py-24">
           <SectionHeading
             eyebrow="Why FAST"
@@ -214,7 +214,7 @@ export default function AboutPage() {
       </section>
 
       {/* Closing CTA */}
-      <section className="relative overflow-hidden">
+      <section className="relative bg-paper overflow-hidden">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-ink/[0.04] rounded-full blur-3xl animate-pulse" />
           <div className="absolute -bottom-24 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-ink/[0.03] rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />

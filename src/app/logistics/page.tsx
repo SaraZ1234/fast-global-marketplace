@@ -38,7 +38,7 @@ export default function LogisticsPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <SectionHeading eyebrow="Shipping Modes" title="Every route, coordinated for you." />
           <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line">
@@ -85,7 +85,7 @@ export default function LogisticsPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden">
+      <section className="relative bg-paper overflow-hidden">
         <div
           aria-hidden
           className="motion-safe:animate-pulse pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-ink/[0.06] blur-3xl"

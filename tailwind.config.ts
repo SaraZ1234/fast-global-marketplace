@@ -9,8 +9,9 @@ const config: Config = {
     extend: {
       colors: {
         ink: "#0A0A0A",
-        paper: "#FFFFFF",
-        bone: "#F4F4F2",
+        paper: "#F3F4F6",
+        // #F5F3EF
+        bone: "#FFFFFF",
         line: "#DEDEDA",
         smoke: "#8A8A85",
         ash: "#48484A",

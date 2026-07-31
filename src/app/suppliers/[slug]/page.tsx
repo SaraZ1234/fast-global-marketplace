@@ -171,7 +171,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
 
   return (
     <div className="overflow-x-hidden">
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-paper">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <nav className="text-[11px] sm:text-xs font-mono uppercase tracking-widest2 text-smoke mb-5 sm:mb-8 overflow-x-auto whitespace-nowrap">
             <Link href="/" className="hover:text-ink transition-colors">
@@ -280,7 +280,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
       </section>
 
       {/* Company Overview */}
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <Reveal>
             <Eyebrow>Company Overview</Eyebrow>
@@ -343,7 +343,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
       </section>
 
       {/* Certifications & Credentials */}
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <Reveal>
             <Eyebrow>Certifications & Credentials</Eyebrow>
@@ -363,7 +363,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-paper">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <Reveal>
             <Eyebrow>Main Products</Eyebrow>
@@ -383,7 +383,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
 
       {/* Expanded Product Showcase (6-8 items, same industry, carousel on mobile / pagination on desktop) */}
       {catalog.length > 0 && (
-        <section className="border-b border-line">
+        <section className="border-b border-line bg-paper">
           <div className="container-x py-8 sm:py-14 md:py-20">
             <Reveal>
               <Eyebrow>Catalog</Eyebrow>
@@ -412,7 +412,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
         </div>
       </section>
 
-      <section>
+      <section className="bg-bone">
         <div className="container-x py-8 sm:py-14 md:py-20">
           <Reveal>
             <Eyebrow>Other Suppliers</Eyebrow>

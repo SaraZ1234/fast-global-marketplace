@@ -53,7 +53,7 @@ export default function ServicesPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line border border-line">
             {overviewStats.map((s, idx) => (
               <Reveal key={s.label} delay={idx * 0.06}>
-                <div className="bg-bone px-3 py-4 sm:px-5 sm:py-5 flex flex-col items-center text-center gap-1.5 sm:gap-2">
+                <div className="bg-paper px-3 py-4 sm:px-5 sm:py-5 flex flex-col items-center text-center gap-1.5 sm:gap-2">
                   <s.icon size={16} className="text-ink shrink-0 sm:size-[18px]" />
                   <p className="font-display font-bold text-base sm:text-xl tracking-tightest">{s.value}</p>
                   <p className="text-[9px] sm:text-[11px] font-mono uppercase tracking-widest2 text-smoke leading-tight">
@@ -81,7 +81,7 @@ export default function ServicesPage() {
         </nav>
       </div>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-10 sm:py-16 md:py-24">
           <SectionHeading
             eyebrow="Sourcing & Manufacturing"
@@ -140,7 +140,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-10 sm:py-16 md:py-24">
           <SectionHeading eyebrow="Support" title="Help whenever you need it." />
           <div className="mt-7 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line">
@@ -164,7 +164,7 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden">
+      <section className="relative bg-paper overflow-hidden">
         {/* Ambient glow blobs — consistent with your established CTA pattern */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-ink/[0.04] rounded-full blur-3xl animate-pulse" />

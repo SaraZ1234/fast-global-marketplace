@@ -32,7 +32,7 @@ export default function SuppliersPage() {
         </div>
       </section>
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-14 sm:py-20 md:py-24">
           <SectionHeading
             eyebrow="Featured This Week"
@@ -79,7 +79,7 @@ export default function SuppliersPage() {
         </div>
       </section>
 
-      <section>
+      <section className="bg-paper">
         <div className="container-x py-14 sm:py-20 md:py-24">
           <SectionHeading eyebrow="Coverage" title="Suppliers across every category." />
           <div className="mt-6 sm:mt-8 flex flex-wrap gap-2 sm:gap-3">

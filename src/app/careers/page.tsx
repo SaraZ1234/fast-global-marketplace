@@ -19,7 +19,7 @@ export default function CareersPage() {
         title="Help build the infrastructure of global trade."
         description="We're a distributed team working on marketplace trust, logistics, and AI-driven discovery."
       />
-      <section className="overflow-hidden">
+      <section className="bg-paper overflow-hidden">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <SectionHeading eyebrow="Open Roles" title="Current openings." />
           <div className="mt-8 sm:mt-10 divide-y divide-line border-t border-b border-line">

@@ -16,7 +16,7 @@ export default function FaqPage() {
         description="Everything you need to know about buying, selling, and trading on FAST Global Marketplace."
       />
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-paper">
         <div className="container-x py-10 sm:py-12 md:py-20">
           <div className="max-w-3xl mx-auto">
             <Reveal>

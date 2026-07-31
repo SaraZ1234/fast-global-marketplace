@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <div className="overflow-x-hidden">
       {/* HERO */}
-      <section className="relative border-b border-line overflow-hidden">
+      <section className="relative bg-paper border-b border-line overflow-hidden">
         <div className="absolute inset-0 grid-paper opacity-[0.035] pointer-events-none" />
         <div className="container-x relative py-14 sm:py-20 md:py-28 lg:py-32">
           {/* Mobile / tablet: horizontal industry scroller above the hero copy */}
@@ -115,7 +115,7 @@ export default function Home() {
       <Ticker />
 
       {/* ABOUT STRIP */}
-      <section className="border-b border-line">
+      <section className="bg-paper border-b border-line">
         <div className="container-x py-12 sm:py-16 md:py-20">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10">
             <div className="md:col-span-4">
@@ -236,7 +236,7 @@ export default function Home() {
       />
 
       {/* BUYER / SELLER FEATURES */}
-      <section className="border-b border-line">
+      <section className="bg-paper border-b border-line">
         <div className="container-x py-14 sm:py-20 md:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16">
             <Reveal>
@@ -304,7 +304,7 @@ export default function Home() {
       <LogisticsPartners />
 
       {/* WHY CHOOSE US */}
-      <section className="border-b border-line">
+      <section className="bg-paper border-b border-line">
         <div className="container-x py-14 sm:py-20 md:py-28">
           <SectionHeading
             eyebrow="Why FAST"
@@ -351,7 +351,7 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section>
+      <section className="bg-paper">
         <div className="container-x py-14 sm:py-20 md:py-28 text-center">
           <Reveal>
             <h2 className="font-display font-bold text-2xl sm:text-3xl md:text-5xl tracking-tightest max-w-3xl mx-auto">

@@ -21,7 +21,7 @@ export default function LegalPage() {
         title="Policies and agreements."
         description="Reference documents governing the use of FAST Global Marketplace. Placeholder summaries — replace with full legal text before launch."
       />
-      <section className="overflow-hidden">
+      <section className="bg-paper overflow-hidden">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <div className="max-w-3xl">
             {docs.map((d) => (

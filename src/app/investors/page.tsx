@@ -11,7 +11,7 @@ export default function InvestorsPage() {
         title="Backing global trade infrastructure."
         description="Financial highlights and company information for current and prospective investors."
       />
-      <section className="overflow-hidden">
+      <section className="bg-paper overflow-hidden">
         <div className="container-x py-12 sm:py-16 md:py-24">
           <SectionHeading eyebrow="Highlights" title="Company at a glance." />
           <div className="mt-8 sm:mt-10 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">

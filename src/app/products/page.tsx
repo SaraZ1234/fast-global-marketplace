@@ -164,8 +164,8 @@ export default function ProductsPage() {
       prev.includes(slug)
         ? prev.filter((item) => item !== slug)
         : prev.length < 4
-        ? [...prev, slug]
-        : prev
+          ? [...prev, slug]
+          : prev
     );
   };
 
@@ -256,7 +256,7 @@ export default function ProductsPage() {
         description="Filter by industry, MOQ, and price to shortlist products from verified manufacturers and wholesalers."
       />
 
-      <section>
+      <section className="bg-paper">
         <div className="container-x py-10 sm:py-12 md:py-16">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-6 hidden sm:block">
@@ -273,7 +273,7 @@ export default function ProductsPage() {
 
           {/* Search Bar & Mobile Filter Toggle */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-10">
-            <div className="flex-1 flex items-center gap-3 border border-ink px-4 py-3 bg-paper">
+            <div className="flex-1 flex items-center gap-3 border border-ink px-4 py-3 bg-bone">
               <Search size={18} className="text-smoke shrink-0" />
               <input
                 type="text"
@@ -314,11 +314,10 @@ export default function ProductsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10">
             {/* Sidebar / Filter Section */}
             <aside
-              className={`lg:col-span-3 ${
-                showMobileFilters ? "block" : "hidden lg:block"
-              }`}
+              className={`lg:col-span-3 ${showMobileFilters ? "block" : "hidden lg:block"
+                }`}
             >
-              <div className="lg:sticky lg:top-24 bg-paper p-4 lg:p-0 border lg:border-none border-line space-y-8">
+              <div className="lg:sticky lg:top-24 bg-bone p-4 lg:p-0 border lg:border-none border-line space-y-8">
                 {/* Industries */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -435,9 +434,8 @@ export default function ProductsPage() {
                       onClick={() => setViewMode("grid")}
                       aria-label="Grid view"
                       aria-pressed={viewMode === "grid"}
-                      className={`p-2 transition-colors ${
-                        viewMode === "grid" ? "bg-ink text-paper" : "text-smoke hover:text-ink"
-                      }`}
+                      className={`p-2 transition-colors ${viewMode === "grid" ? "bg-ink text-paper" : "text-smoke hover:text-ink"
+                        }`}
                     >
                       <LayoutGrid size={15} />
                     </button>
@@ -445,9 +443,8 @@ export default function ProductsPage() {
                       onClick={() => setViewMode("list")}
                       aria-label="List view"
                       aria-pressed={viewMode === "list"}
-                      className={`p-2 border-l border-line transition-colors ${
-                        viewMode === "list" ? "bg-ink text-paper" : "text-smoke hover:text-ink"
-                      }`}
+                      className={`p-2 border-l border-line transition-colors ${viewMode === "list" ? "bg-ink text-paper" : "text-smoke hover:text-ink"
+                        }`}
                     >
                       <ListIcon size={15} />
                     </button>
@@ -471,11 +468,10 @@ export default function ProductsPage() {
                       <Reveal key={p.slug} delay={(i % 6) * 0.04}>
                         <Link
                           href={`/products/${p.slug}`}
-                          className={`group relative block bg-paper card-hover border border-transparent transition-all duration-300 hover:border-ink/10 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40 ${
-                            viewMode === "grid"
-                              ? "p-5 sm:p-6 h-full flex flex-col"
-                              : "p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-6"
-                          }`}
+                          className={`group relative block bg-bone card-hover border border-transparent transition-all duration-300 hover:border-ink/10 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40 ${viewMode === "grid"
+                            ? "p-5 sm:p-6 h-full flex flex-col"
+                            : "p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-6"
+                            }`}
                         >
                           {/* Compare checkbox */}
                           <button
@@ -487,22 +483,20 @@ export default function ProductsPage() {
                             }}
                             aria-pressed={isComparing}
                             aria-label={isComparing ? "Remove from compare" : "Add to compare"}
-                            className={`absolute z-10 top-2 left-2 flex items-center gap-1 px-1.5 py-1 text-[10px] font-mono uppercase tracking-wide border backdrop-blur-sm transition-colors ${
-                              isComparing
-                                ? "bg-ink text-paper border-ink"
-                                : "bg-paper/90 text-smoke border-line hover:text-ink hover:border-ink"
-                            }`}
+                            className={`absolute z-10 top-2 left-2 flex items-center gap-1 px-1.5 py-1 text-[10px] font-mono uppercase tracking-wide border backdrop-blur-sm transition-colors ${isComparing
+                              ? "bg-ink text-paper border-ink"
+                              : "bg-paper/90 text-smoke border-line hover:text-ink hover:border-ink"
+                              }`}
                           >
                             <Scale size={11} />
                             {isComparing ? "Added" : "Compare"}
                           </button>
 
                           <div
-                            className={`bg-bone border border-line flex items-center justify-center overflow-hidden relative group-hover:opacity-95 transition-opacity ${
-                              viewMode === "grid"
-                                ? "aspect-[4/3] mb-5"
-                                : "aspect-[4/3] sm:aspect-square sm:w-48 shrink-0"
-                            }`}
+                            className={`bg-bone border border-line flex items-center justify-center overflow-hidden relative group-hover:opacity-95 transition-opacity ${viewMode === "grid"
+                              ? "aspect-[4/3] mb-5"
+                              : "aspect-[4/3] sm:aspect-square sm:w-48 shrink-0"
+                              }`}
                           >
                             <Image
                               src={p.image}
@@ -620,11 +614,10 @@ export default function ProductsPage() {
                           key={page}
                           onClick={() => goToPage(page)}
                           aria-current={page === currentPage ? "page" : undefined}
-                          className={`w-9 h-9 text-xs font-mono border transition-colors ${
-                            page === currentPage
-                              ? "bg-ink text-paper border-ink"
-                              : "border-line text-smoke hover:border-ink hover:text-ink"
-                          }`}
+                          className={`w-9 h-9 text-xs font-mono border transition-colors ${page === currentPage
+                            ? "bg-ink text-paper border-ink"
+                            : "border-line text-smoke hover:border-ink hover:text-ink"
+                            }`}
                         >
                           {page}
                         </button>

@@ -15,7 +15,7 @@ export default function PricingPage() {
         description="Start free and upgrade as your catalog and order volume grow. No hidden fees, cancel anytime."
       />
 
-      <section className="border-b border-line">
+      <section className="border-b border-line bg-bone">
         <div className="container-x py-16 md:py-24">
           <div className="grid lg:grid-cols-3 gap-px bg-line border border-line">
             {plans.map((plan, i) => (
@@ -80,7 +80,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section>
+      <section className="bg-paper">
         <div className="container-x py-16 md:py-24 text-center">
           <SectionHeading
             eyebrow="Need More"
