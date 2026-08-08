@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { apiRequest } from "@/lib/api";
+import { clearSession } from "@/lib/auth";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Eyebrow } from "@/components/UI";
 import {
@@ -41,9 +43,8 @@ function Toggle({
       aria-pressed={checked}
     >
       <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-paper transition-transform duration-200 ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
+        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-paper transition-transform duration-200 ${checked ? "translate-x-5" : "translate-x-0"
+          }`}
       />
     </button>
   );
@@ -61,6 +62,7 @@ function getPasswordStrength(pw: string): { label: string; color: string; score:
   if (score === 2 || score === 3) return { label: "Medium", color: "bg-amber-500", score };
   return { label: "Strong", color: "bg-emerald-500", score };
 }
+
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState<NotificationSetting[]>(INITIAL_NOTIFICATIONS);
@@ -95,7 +97,7 @@ export default function SettingsPage() {
     });
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwError(null);
 
@@ -103,38 +105,96 @@ export default function SettingsPage() {
       setPwError("Please fill in all password fields.");
       return;
     }
+
     if (newPw.length < 8) {
       setPwError("New password must be at least 8 characters.");
       return;
     }
+
     if (newPw !== confirmPw) {
       setPwError("New password and confirmation do not match.");
       return;
     }
+
     if (newPw === currentPw) {
       setPwError("New password must be different from current password.");
       return;
     }
 
-    setPwSaving(true);
-    setTimeout(() => {
-      setPwSaving(false);
+
+    try {
+
+      setPwSaving(true);
+
+      await apiRequest("/auth/change-password", {
+        method: "PATCH",
+        body: JSON.stringify({
+          currentPassword: currentPw,
+          newPassword: newPw,
+        }),
+      });
+
+
       setCurrentPw("");
       setNewPw("");
       setConfirmPw("");
+
       showToast("Password updated successfully");
-    }, 800);
+
+
+    } catch (error: any) {
+
+      setPwError(error.message);
+
+    } finally {
+
+      setPwSaving(false);
+
+    }
+
   };
 
-  const handleDeactivate = () => {
+  const handleDeactivate = async () => {
+
     if (deactivateConfirmText !== "DEACTIVATE") return;
-    setDeactivating(true);
-    setTimeout(() => {
-      setDeactivating(false);
-      setDeactivateOpen(false);
+
+
+    try {
+
+      setDeactivating(true);
+
+
+      await apiRequest("/auth/deactivate", {
+        method: "PATCH",
+      });
+
+
       setDeactivated(true);
+
       showToast("Account deactivated");
-    }, 900);
+
+
+      setTimeout(() => {
+
+        clearSession();
+
+        window.location.href = "/login";
+
+      }, 1500);
+
+
+
+    } catch (error: any) {
+
+      showToast(error.message);
+
+
+    } finally {
+
+      setDeactivating(false);
+
+    }
+
   };
 
   return (

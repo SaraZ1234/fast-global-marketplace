@@ -28,15 +28,34 @@ import SupplierActions from "@/components/supplier/SupplierActions";
 import FactoryGallery from "@/components/supplier/FactoryGallery";
 import SupplierReviews from "@/components/supplier/SupplierReviews";
 import ProductShowcase from "@/components/supplier/ProductShowcase";
-import { suppliers, products } from "@/lib/data";
+import { products } from "@/lib/data";
 
-export function generateStaticParams() {
-  return suppliers.map((s) => ({ slug: s.slug }));
-}
+// export function generateStaticParams() {
+//   return suppliers.map((s) => ({ slug: s.slug }));
+// }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const supplier = suppliers.find((s) => s.slug === params.slug);
-  return { title: supplier ? supplier.name : "Supplier" };
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+
+  const response = await fetch(
+   `http://localhost:3001/public/vendors/${params.slug}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    return {
+      title: "Supplier",
+    };
+  }
+
+  const supplier = await response.json();
+
+  return {
+    title: supplier.companyName,
+  };
 }
 
 // --- Deterministic trust / credential signals (no client state required) ---
@@ -146,27 +165,47 @@ function getSupplierReviews(slug: string) {
   });
 }
 
-export default function SupplierDetail({ params }: { params: { slug: string } }) {
-  const supplier = suppliers.find((s) => s.slug === params.slug);
-  if (!supplier) return notFound();
+export default async function SupplierDetail(
+  { params }: { params: { slug: string } }
+) {
 
+  const response = await fetch(
+    `http://localhost:3001/public/vendors/${params.slug}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    return notFound();
+  }
+
+  const supplier = await response.json();
+  console.log("SUPPLIER DATA:", supplier);
   // Products matching this supplier directly, plus same-industry fallback so the
   // showcase always has enough relevant items (6-8), never mixing in unrelated industries.
-  const directCatalog = products.filter((p) => p.supplierSlug === supplier.slug);
+  const directCatalog = products.filter(
+    (p) => p.supplierSlug === params.slug
+  );
   const sameIndustryCatalog = products.filter(
-    (p) => p.supplierSlug !== supplier.slug && p.industry.toLowerCase() === supplier.industry.toLowerCase()
+    (p) =>
+      p.supplierSlug !== params.slug &&
+      p.industry?.toLowerCase() === supplier.industry?.toLowerCase()
   );
   const catalog = [...directCatalog, ...sameIndustryCatalog].slice(0, 8);
 
-  const others = suppliers.filter((s) => s.slug !== supplier.slug).slice(0, 3);
-  const { businessType, establishedYear, responseTimeHours, tier, certs } = getSupplierCredentials(
-    supplier.slug,
-    supplier.rating,
-    supplier.years
+  const others: any[] = [];
+  const supplierSlug = params.slug;
+
+const { businessType, establishedYear, responseTimeHours, tier, certs } =
+  getSupplierCredentials(
+    supplierSlug,
+    supplier.rating ?? 0,
+    supplier.yearsInBusiness ?? 0
   );
-  const overview = getCompanyOverview(supplier.slug, supplier.years);
-  const galleryItems = getGalleryItems(supplier.slug);
-  const reviews = getSupplierReviews(supplier.slug);
+  const overview = getCompanyOverview(params.slug, supplier.yearsInBusiness ?? 0);
+  const galleryItems = getGalleryItems(params.slug);
+  const reviews = getSupplierReviews(params.slug);
   const numericRating = typeof supplier.rating === "string" ? parseFloat(supplier.rating) : supplier.rating;
 
   return (
@@ -185,19 +224,19 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
               Suppliers
             </Link>
             <span className="mx-2 text-line">/</span>
-            <span className="text-ink">{supplier.industry}</span>
+            <span className="text-ink">Supplier</span>
           </nav>
 
           <Reveal>
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 sm:gap-8">
               <div className="flex items-start gap-3 sm:gap-5 min-w-0">
                 <div className="w-11 h-11 sm:w-16 sm:h-16 bg-ink text-paper flex items-center justify-center font-display font-bold text-base sm:text-xl shrink-0">
-                  {supplier.name.charAt(0)}
+                  {supplier.companyName.charAt(0)}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="font-display font-bold text-lg sm:text-2xl md:text-3xl tracking-tightest break-words">
-                      {supplier.name}
+                      {supplier.companyName}
                     </h1>
                     {supplier.verified && (
                       <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono uppercase tracking-wide border border-line px-2 py-1 whitespace-nowrap text-ash">
@@ -221,7 +260,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
 
                   <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2 text-xs sm:text-sm text-ash">
                     <span className="inline-flex items-center gap-1.5">
-                      <MapPin size={14} className="shrink-0 text-smoke" /> {supplier.country}
+                      <MapPin size={14} className="shrink-0 text-smoke" /> {supplier.country ?? "Not specified"}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Star size={14} className="shrink-0 text-smoke" /> {supplier.rating} rating
@@ -241,7 +280,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
                   </p>
 
                   <div className="mt-4">
-                    <SupplierActions supplierName={supplier.name} />
+                    <SupplierActions supplierName={supplier.companyName} />
                   </div>
                 </div>
               </div>
@@ -264,9 +303,9 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:divide-x md:divide-line">
             {[
               { icon: Percent, value: supplier.responseRate, label: "Response Rate" },
-              { icon: CalendarCheck, value: `${supplier.years}`, label: "Years on FAST" },
+              { icon: CalendarCheck, value: `${supplier.yearsInBusiness ?? 0}`, label: "Years on FAST" },
               { icon: Star, value: supplier.rating, label: "Buyer Rating" },
-              { icon: Boxes, value: `${catalog.length || supplier.mainProducts.length}`, label: "Listed Products" },
+              { icon: Boxes, value: `${catalog.length || supplier.products?.length || 0}`, label: "Listed Products" },
             ].map((stat, idx) => (
               <Reveal key={stat.label} delay={idx * 0.06}>
                 <div className={`md:pl-8 ${idx === 0 ? "first:md:pl-0" : ""}`}>
@@ -368,7 +407,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
           <Reveal>
             <Eyebrow>Main Products</Eyebrow>
             <div className="mt-5 sm:mt-6 flex flex-wrap gap-2 sm:gap-3">
-              {supplier.mainProducts.map((mp) => (
+              {supplier.mainProducts?.map((mp: string) => (
                 <span
                   key={mp}
                   className="text-xs sm:text-sm font-medium border border-line px-3 sm:px-4 py-1.5 sm:py-2 break-words transition-colors hover:border-ink/30 hover:bg-bone"
@@ -388,7 +427,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
             <Reveal>
               <Eyebrow>Catalog</Eyebrow>
               <p className="mt-2 text-xs sm:text-sm text-smoke max-w-xl">
-                Products from {supplier.name} and other {supplier.industry.toLowerCase()} listings on FAST.
+                Products from {supplier.companyName} listings on FAST.
               </p>
             </Reveal>
             <div className="mt-5 sm:mt-8">
@@ -457,7 +496,7 @@ export default function SupplierDetail({ params }: { params: { slug: string } })
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-paper border-t border-line px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[9px] font-mono uppercase tracking-widest2 text-smoke">Supplier</p>
-          <p className="text-xs sm:text-sm font-medium truncate">{supplier.name}</p>
+          <p className="text-xs sm:text-sm font-medium truncate">{supplier.companyName}</p>
         </div>
         <div className="shrink-0">
           <PrimaryButton href="/contact" icon={ArrowUpRight}>

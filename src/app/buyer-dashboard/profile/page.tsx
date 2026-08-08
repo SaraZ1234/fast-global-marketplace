@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { apiRequest } from "@/lib/api";
 import Image from "next/image";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Eyebrow } from "@/components/UI";
@@ -20,25 +21,25 @@ interface ProfileData {
   name: string;
   email: string;
   phone: string;
-  company: string;
-  location: string;
   memberSince: string;
+  profileImg: string | null;
+
+  totalOrders: number;
+  activeRfqs: number;
+  yearsTrading: number;
 }
 
 const INITIAL_PROFILE: ProfileData = {
   name: "Ahmed Khan",
   email: "ahmed.khan@buyerco.com",
   phone: "+92 300 1234567",
-  company: "Buyer Co. Trading LLC",
-  location: "Rawalpindi, Punjab, Pakistan",
   memberSince: "March 2024",
+  profileImg: null,
+  totalOrders: 0,
+  activeRfqs: 0,
+  yearsTrading: 0,
 };
 
-const STATS = [
-  { label: "Total Orders", value: "48" },
-  { label: "Active RFQs", value: "9" },
-  { label: "Years Trading", value: "2" },
-];
 
 function getInitials(name: string) {
   return name
@@ -51,13 +52,46 @@ function getInitials(name: string) {
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE);
-  const [draft, setDraft] = useState<ProfileData>(INITIAL_PROFILE);
+
+  console.log("PROFILE PAGE RENDER");
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [draft, setDraft] = useState<ProfileData | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const data = await apiRequest("/auth/profile");
+
+      console.log("PROFILE DATA:", data);
+
+      const userProfile: ProfileData = {
+        name: data.fullName,
+        email: data.email,
+        phone: data.phone || "",
+        memberSince: new Date(data.createdAt).toDateString(),
+        profileImg: data.profileImg || null,
+
+        totalOrders: data.totalOrders || 0,
+        activeRfqs: data.activeRfqs || 0,
+        yearsTrading: data.yearsTrading || 0,
+      };
+
+      setProfile(userProfile);
+      setDraft(userProfile);
+
+      setAvatar(
+        userProfile.profileImg
+          ? `http://localhost:3001/uploads/${userProfile.profileImg}`
+          : null
+      );
+    }
+
+    loadProfile();
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -65,7 +99,14 @@ export default function ProfilePage() {
   };
 
   const startEditing = () => {
-    setDraft(profile);
+    console.log("START EDIT FUNCTION");
+
+    if (!profile) {
+      console.log("PROFILE NULL");
+      return;
+    }
+
+    setDraft({ ...profile });
     setEditing(true);
   };
 
@@ -74,44 +115,113 @@ export default function ProfilePage() {
     setEditing(false);
   };
 
-  const handleChange = (field: keyof ProfileData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDraft((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleChange =
+    (field: keyof ProfileData) =>
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setDraft((prev) => {
+          if (!prev) return prev;
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+          return {
+            ...prev,
+            [field]: e.target.value,
+          };
+        });
+      };
+
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSaving(true);
-    setTimeout(() => {
-      setProfile(draft);
-      setSaving(false);
+
+    if (!draft) return;
+
+    try {
+      setSaving(true);
+
+      const updated = await apiRequest("/auth/profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          fullName: draft.name,
+          phone: draft.phone,
+        }),
+      });
+
+      const updatedProfile = {
+        ...profile!,
+        name: updated.fullName,
+        email: updated.email,
+        phone: updated.phone || "",
+        memberSince: profile?.memberSince || "",
+      };
+
+      setProfile(updatedProfile);
+      setDraft(updatedProfile);
       setEditing(false);
+
       showToast("Profile updated successfully");
-    }, 600);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePhotoClick = () => fileInputRef.current?.click();
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
+
     if (!file.type.startsWith("image/")) {
       showToast("Please select a valid image file");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAvatar(reader.result as string);
+
+    try {
+      const token = localStorage.getItem("access_token");
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        "http://localhost:3001/auth/profile/photo",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+
+      console.log("PHOTO UPLOAD RESPONSE:", data);
+
+
+      if (!response.ok) {
+        throw new Error(data.message || "Upload failed");
+      }
+
+      setAvatar(`http://localhost:3001/uploads/${data.profileImg}`);
+
       showToast("Profile photo updated");
-    };
-    reader.readAsDataURL(file);
+
+    } catch (error: any) {
+      console.error("PHOTO UPLOAD ERROR:", error.message);
+      showToast(error.message);
+    }
+
     e.target.value = "";
   };
 
   const fields: { key: keyof ProfileData; label: string; icon: typeof Mail; type?: string }[] = [
     { key: "email", label: "Email", icon: Mail, type: "email" },
     { key: "phone", label: "Phone", icon: Phone, type: "tel" },
-    { key: "company", label: "Company", icon: Building2 },
-    { key: "location", label: "Location", icon: MapPin },
   ];
 
   return (
@@ -129,11 +239,17 @@ export default function ProfilePage() {
             <div className="relative w-20 h-20 mx-auto">
               {avatar ? (
                 <div className="relative w-20 h-20 rounded-full overflow-hidden">
-                  <Image src={avatar} alt="Profile photo" fill className="object-cover" />
+                  <Image
+                    src={avatar}
+                    alt="Profile photo"
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
                 </div>
               ) : (
                 <div className="w-20 h-20 rounded-full bg-ink text-paper flex items-center justify-center font-display font-bold text-2xl">
-                  {getInitials(profile.name)}
+                  {getInitials(profile?.name || "User")}
                 </div>
               )}
               <button
@@ -156,12 +272,11 @@ export default function ProfilePage() {
             {editing ? (
               <input
                 type="text"
-                value={draft.name}
-                onChange={handleChange("name")}
+                value={draft?.name || ""} onChange={handleChange("name")}
                 className="mt-4 w-full text-center bg-bone border border-line px-2 py-1.5 font-display font-semibold text-lg focus:outline-none focus:border-ash"
               />
             ) : (
-              <h2 className="mt-4 font-display font-semibold text-lg break-words">{profile.name}</h2>
+              <h2 className="mt-4 font-display font-semibold text-lg break-words">{profile?.name || "User"}</h2>
             )}
             <p className="text-xs text-smoke font-mono uppercase tracking-wide mt-1">Buyer Account</p>
             <button
@@ -194,13 +309,13 @@ export default function ProfilePage() {
                     {editing ? (
                       <input
                         type={f.type || "text"}
-                        value={draft[f.key]}
+                        value={draft?.[f.key] || ""}
                         onChange={handleChange(f.key)}
                         required
                         className="mt-1 w-full bg-bone border border-line px-2.5 py-1.5 text-sm font-medium focus:outline-none focus:border-ash"
                       />
                     ) : (
-                      <p className="mt-1 text-sm font-medium break-words">{profile[f.key]}</p>
+                      <p className="mt-1 text-sm font-medium break-words">{profile?.[f.key] || ""}</p>
                     )}
                   </div>
                 </div>
@@ -209,7 +324,7 @@ export default function ProfilePage() {
                 <Calendar size={16} className="text-smoke shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="text-[10px] font-mono uppercase tracking-widest2 text-smoke">Member Since</p>
-                  <p className="mt-1 text-sm font-medium">{profile.memberSince}</p>
+                  <p className="mt-1 text-sm font-medium">{profile?.memberSince || ""}</p>
                 </div>
               </div>
             </div>
@@ -236,7 +351,11 @@ export default function ProfilePage() {
               ) : (
                 <button
                   type="button"
-                  onClick={startEditing}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log("EDIT CLICK FINAL");
+                    startEditing();
+                  }}
                   className="inline-flex items-center gap-1.5 bg-ink text-paper text-xs font-mono uppercase tracking-widest2 px-6 py-3 hover:bg-ash transition-colors"
                 >
                   <Pencil size={13} /> Edit Profile
@@ -246,12 +365,36 @@ export default function ProfilePage() {
           </form>
 
           <div className="mt-6 grid grid-cols-3 gap-px bg-line border border-line">
-            {STATS.map((s) => (
-              <div key={s.label} className="bg-paper p-4 sm:p-5 text-center">
-                <p className="font-display font-bold text-xl sm:text-2xl">{s.value}</p>
-                <p className="text-[10px] font-mono uppercase tracking-widest2 text-smoke mt-1">{s.label}</p>
-              </div>
-            ))}
+
+            <div className="bg-paper p-4 sm:p-5 text-center">
+              <p className="font-display font-bold text-xl sm:text-2xl">
+                {profile?.totalOrders || 0}
+              </p>
+              <p className="text-[10px] font-mono uppercase tracking-widest2 text-smoke mt-1">
+                Total Orders
+              </p>
+            </div>
+
+
+            <div className="bg-paper p-4 sm:p-5 text-center">
+              <p className="font-display font-bold text-xl sm:text-2xl">
+                {profile?.activeRfqs || 0}
+              </p>
+              <p className="text-[10px] font-mono uppercase tracking-widest2 text-smoke mt-1">
+                Active RFQs
+              </p>
+            </div>
+
+
+            <div className="bg-paper p-4 sm:p-5 text-center">
+              <p className="font-display font-bold text-xl sm:text-2xl">
+                {profile?.yearsTrading || 0}
+              </p>
+              <p className="text-[10px] font-mono uppercase tracking-widest2 text-smoke mt-1">
+                Years Trading
+              </p>
+            </div>
+
           </div>
         </div>
       </div>

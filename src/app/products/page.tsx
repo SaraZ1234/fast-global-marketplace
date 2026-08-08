@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { apiRequest } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -105,42 +106,40 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [compareList, setCompareList] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Combine and normalize products from @/lib/data and @/lib/homeProduct
-  const allProducts = useMemo<NormalizedProduct[]>(() => {
-    const formattedMain = mainProducts.map((p) => ({
-      slug: p.slug,
-      code: p.code,
-      name: p.name,
-      industry: p.industry,
-      price: p.price,
-      moq: p.moq,
-      image: PRODUCT_IMAGES[p.slug] || "https://picsum.photos/seed/default/600/600",
-    }));
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const data = await apiRequest("/product");
+        console.log(data);
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    const convertExtra = (list: any[], industryName: string) =>
-      list.map((p) => ({
-        slug: p.id || p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        code: p.id?.toUpperCase(),
-        name: p.name,
-        industry: industryName,
-        price: p.price,
-        moq: p.moq || "Negotiable",
-        supplier: p.supplier,
-        country: p.country,
-        verified: p.verified,
-        image: p.image,
-      }));
-
-    return [
-      ...formattedMain,
-      ...convertExtra(machineryProducts, "Machinery"),
-      ...convertExtra(medicalProducts, "Medical"),
-      ...convertExtra(electronicsProducts, "Electronics"),
-      ...convertExtra(fashionProducts, "Fashion"),
-      ...convertExtra(homeFurnitureProducts, "Home & Furniture"),
-    ];
+    fetchProducts();
   }, []);
+
+  const allProducts = useMemo<NormalizedProduct[]>(() => {
+    return products.map((p) => ({
+      slug: p.slug,
+      code: `PRD-${p.id}`,
+      name: p.name,
+      industry: p.category?.name || "General",
+      price: `PKR ${p.price}`,
+      moq: "1",
+      supplier: p.vendor?.companyName,
+      country: "Pakistan",
+      verified: p.vendor?.status === "Approved",
+      image:
+        "https://picsum.photos/seed/" + p.id + "/600/600",
+    }));
+  }, [products]);
 
   // Toggle industry checkbox selection
   const handleIndustryToggle = (slug: string) => {

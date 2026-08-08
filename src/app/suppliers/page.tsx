@@ -3,11 +3,25 @@ import Link from "next/link";
 import { ShieldCheck, MapPin, Star, ArrowUpRight } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { PageHero, SectionHeading, PrimaryButton } from "@/components/UI";
-import { trustItems, industries, suppliers } from "@/lib/data";
-
+import { trustItems, industries } from "@/lib/data";
+import { apiRequest } from "@/lib/api";
 export const metadata: Metadata = { title: "Suppliers" };
 
-export default function SuppliersPage() {
+interface Supplier {
+  id: number;
+  slug: string;
+  companyName: string;
+  description?: string;
+  verified?: boolean;
+  country?: string;
+  rating?: number;
+  yearsInBusiness?: number;
+}
+
+export default async function SuppliersPage() {
+  const response = await apiRequest("/public/vendors");
+
+  const suppliers: Supplier[] = response.data || response;
   return (
     <div className="overflow-x-hidden">
       <PageHero
@@ -43,12 +57,12 @@ export default function SuppliersPage() {
             {suppliers.map((s, i) => (
               <Reveal key={s.slug} delay={(i % 3) * 0.05}>
                 <Link
-                  href={`/suppliers/${s.slug}`}
+                  href={`/suppliers/${s.id}`}
                   className="group block bg-paper p-5 sm:p-6 h-full card-hover border border-transparent flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="w-10 h-10 sm:w-11 sm:h-11 shrink-0 bg-ink text-paper flex items-center justify-center font-display font-bold">
-                      {s.name.charAt(0)}
+                      {s.companyName.charAt(0)}
                     </div>
                     {s.verified && (
                       <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono uppercase tracking-wide border border-line px-2 py-1 whitespace-nowrap">
@@ -57,17 +71,17 @@ export default function SuppliersPage() {
                     )}
                   </div>
                   <h3 className="mt-5 font-display font-semibold text-base sm:text-lg break-words">
-                    {s.name}
+                    {s.companyName}
                   </h3>
-                  <p className="mt-1 text-sm text-smoke">{s.industry}</p>
+                  <p className="mt-1 text-sm text-smoke">{s.description}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ash font-mono">
                     <span className="inline-flex items-center gap-1">
-                      <MapPin size={13} className="shrink-0" /> {s.country}
+                      <MapPin size={13} className="shrink-0" /> {s.country || "Global"}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <Star size={13} className="shrink-0" /> {s.rating}
                     </span>
-                    <span>{s.years} yrs</span>
+                    <span>{s.yearsInBusiness || "N/A"} yrs</span>
                   </div>
                   <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest2 text-ink opacity-0 group-hover:opacity-100 transition-opacity">
                     View profile <ArrowUpRight size={13} />

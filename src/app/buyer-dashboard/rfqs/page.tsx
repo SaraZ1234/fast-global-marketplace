@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { Eyebrow } from "@/components/UI";
 import {
@@ -13,7 +13,11 @@ import {
   Building2,
 } from "lucide-react";
 
-type RFQStatus = "Pending" | "Quoted" | "Negotiating" | "Closed";
+type RFQStatus =
+  | "Open"
+  | "Quoted"
+  | "Negotiating"
+  | "Closed";
 
 interface Quote {
   supplier: string;
@@ -23,96 +27,102 @@ interface Quote {
 }
 
 interface RFQ {
-  id: string;
-  product: string;
-  qty: string;
+  id: number;
+  title: string;
+  description: string;
+  quantity: number;
+  budget: number;
   status: RFQStatus;
-  date: string;
-  notes: string;
-  quotes: Quote[];
+  createdAt: string;
+  quotations: any[];
 }
 
-const STATUS_STYLES: Record<RFQStatus, string> = {
+const STATUS_STYLES = {
+  Open: "text-amber-700 bg-amber-50",
   Quoted: "text-blue-700 bg-blue-50",
-  Pending: "text-amber-700 bg-amber-50",
   Negotiating: "text-purple-700 bg-purple-50",
   Closed: "text-smoke bg-bone",
 };
 
-const STATUS_FILTERS: ("All" | RFQStatus)[] = ["All", "Pending", "Quoted", "Negotiating", "Closed"];
-
-const INITIAL_RFQS: RFQ[] = [
-  {
-    id: "RFQ-1042",
-    product: "Hydraulic Excavator Parts",
-    qty: "20 units",
-    status: "Quoted",
-    date: "Jul 22, 2026",
-    notes: "Need OEM-grade hydraulic cylinders compatible with CAT 320 series.",
-    quotes: [
-      { supplier: "Qingdao Machinery Corp.", price: "$1,240 / unit", leadTime: "18-25 days", moq: "10 units" },
-      { supplier: "Shandong Heavy Industries", price: "$1,180 / unit", leadTime: "22-30 days", moq: "20 units" },
-      { supplier: "Xuzhou Construction Equip.", price: "$1,310 / unit", leadTime: "15-20 days", moq: "5 units" },
-    ],
-  },
-  {
-    id: "RFQ-1038",
-    product: "Custom Packaging Boxes",
-    qty: "50,000 pcs",
-    status: "Pending",
-    date: "Jul 19, 2026",
-    notes: "Corrugated boxes, custom print, food-safe coating required.",
-    quotes: [],
-  },
-  {
-    id: "RFQ-1029",
-    product: "Solar Panel 450W",
-    qty: "500 units",
-    status: "Negotiating",
-    date: "Jul 11, 2026",
-    notes: "Monocrystalline panels, need Tier 1 certification.",
-    quotes: [
-      { supplier: "Jiangsu Solar Tech", price: "$38.50 / unit", leadTime: "20-28 days", moq: "100 units" },
-      { supplier: "SunPower Guangzhou", price: "$41.00 / unit", leadTime: "15-20 days", moq: "200 units" },
-      { supplier: "Zhejiang Green Energy", price: "$36.80 / unit", leadTime: "25-35 days", moq: "500 units" },
-      { supplier: "Fujian Renewable Co.", price: "$39.90 / unit", leadTime: "18-24 days", moq: "150 units" },
-      { supplier: "Anhui Solar Systems", price: "$37.60 / unit", leadTime: "22-30 days", moq: "300 units" },
-    ],
-  },
-  {
-    id: "RFQ-1015",
-    product: "Stainless Steel Pipes",
-    qty: "1,000 m",
-    status: "Closed",
-    date: "Jun 30, 2026",
-    notes: "Grade 304, seamless, 2-inch diameter.",
-    quotes: [
-      { supplier: "Wuxi Steel Group", price: "$14.20 / m", leadTime: "12-18 days", moq: "500 m" },
-      { supplier: "Foshan Metal Works", price: "$13.90 / m", leadTime: "15-20 days", moq: "1,000 m" },
-    ],
-  },
-  {
-    id: "RFQ-1002",
-    product: "LED Panel Lights",
-    qty: "3,000 pcs",
-    status: "Closed",
-    date: "Jun 12, 2026",
-    notes: "600x600mm, 40W, 4000K, CE certified.",
-    quotes: [
-      { supplier: "Shenzhen Lighting Tech", price: "$6.80 / pc", leadTime: "10-15 days", moq: "1,000 pcs" },
-      { supplier: "Guangdong LED Co.", price: "$7.20 / pc", leadTime: "12-18 days", moq: "500 pcs" },
-      { supplier: "Ningbo Bright Solutions", price: "$6.50 / pc", leadTime: "14-20 days", moq: "2,000 pcs" },
-      { supplier: "Dongguan Illumination", price: "$7.00 / pc", leadTime: "10-14 days", moq: "1,500 pcs" },
-    ],
-  },
+const STATUS_FILTERS: ("All" | RFQStatus)[] = [
+  "All",
+  "Open",
+  "Quoted",
+  "Negotiating",
+  "Closed",
 ];
+// const INITIAL_RFQS: RFQ[] = [
+//   {
+//     id: "RFQ-1042",
+//     product: "Hydraulic Excavator Parts",
+//     qty: "20 units",
+//     status: "Quoted",
+//     date: "Jul 22, 2026",
+//     notes: "Need OEM-grade hydraulic cylinders compatible with CAT 320 series.",
+//     quotes: [
+//       { supplier: "Qingdao Machinery Corp.", price: "$1,240 / unit", leadTime: "18-25 days", moq: "10 units" },
+//       { supplier: "Shandong Heavy Industries", price: "$1,180 / unit", leadTime: "22-30 days", moq: "20 units" },
+//       { supplier: "Xuzhou Construction Equip.", price: "$1,310 / unit", leadTime: "15-20 days", moq: "5 units" },
+//     ],
+//   },
+//   {
+//     id: "RFQ-1038",
+//     product: "Custom Packaging Boxes",
+//     qty: "50,000 pcs",
+//     status: "Pending",
+//     date: "Jul 19, 2026",
+//     notes: "Corrugated boxes, custom print, food-safe coating required.",
+//     quotes: [],
+//   },
+//   {
+//     id: "RFQ-1029",
+//     product: "Solar Panel 450W",
+//     qty: "500 units",
+//     status: "Negotiating",
+//     date: "Jul 11, 2026",
+//     notes: "Monocrystalline panels, need Tier 1 certification.",
+//     quotes: [
+//       { supplier: "Jiangsu Solar Tech", price: "$38.50 / unit", leadTime: "20-28 days", moq: "100 units" },
+//       { supplier: "SunPower Guangzhou", price: "$41.00 / unit", leadTime: "15-20 days", moq: "200 units" },
+//       { supplier: "Zhejiang Green Energy", price: "$36.80 / unit", leadTime: "25-35 days", moq: "500 units" },
+//       { supplier: "Fujian Renewable Co.", price: "$39.90 / unit", leadTime: "18-24 days", moq: "150 units" },
+//       { supplier: "Anhui Solar Systems", price: "$37.60 / unit", leadTime: "22-30 days", moq: "300 units" },
+//     ],
+//   },
+//   {
+//     id: "RFQ-1015",
+//     product: "Stainless Steel Pipes",
+//     qty: "1,000 m",
+//     status: "Closed",
+//     date: "Jun 30, 2026",
+//     notes: "Grade 304, seamless, 2-inch diameter.",
+//     quotes: [
+//       { supplier: "Wuxi Steel Group", price: "$14.20 / m", leadTime: "12-18 days", moq: "500 m" },
+//       { supplier: "Foshan Metal Works", price: "$13.90 / m", leadTime: "15-20 days", moq: "1,000 m" },
+//     ],
+//   },
+//   {
+//     id: "RFQ-1002",
+//     product: "LED Panel Lights",
+//     qty: "3,000 pcs",
+//     status: "Closed",
+//     date: "Jun 12, 2026",
+//     notes: "600x600mm, 40W, 4000K, CE certified.",
+//     quotes: [
+//       { supplier: "Shenzhen Lighting Tech", price: "$6.80 / pc", leadTime: "10-15 days", moq: "1,000 pcs" },
+//       { supplier: "Guangdong LED Co.", price: "$7.20 / pc", leadTime: "12-18 days", moq: "500 pcs" },
+//       { supplier: "Ningbo Bright Solutions", price: "$6.50 / pc", leadTime: "14-20 days", moq: "2,000 pcs" },
+//       { supplier: "Dongguan Illumination", price: "$7.00 / pc", leadTime: "10-14 days", moq: "1,500 pcs" },
+//     ],
+//   },
+// ];
 
 function todayLabel() {
   return new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 }
 
 export default function RFQsPage() {
-  const [rfqs, setRfqs] = useState<RFQ[]>(INITIAL_RFQS);
+  const [rfqs, setRfqs] = useState<RFQ[]>([]);
   const [statusFilter, setStatusFilter] = useState<"All" | RFQStatus>("All");
   const [search, setSearch] = useState("");
   const [newModalOpen, setNewModalOpen] = useState(false);
@@ -120,12 +130,42 @@ export default function RFQsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetchRFQs();
+  }, []);
+
+  const fetchRFQs = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:3001/rfq/my",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+      console.log("RFQ API RESPONSE:", data);
+
+      setRfqs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const filtered = useMemo(() => {
     return rfqs.filter((r) => {
-      const matchesStatus = statusFilter === "All" || r.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "All" || r.status === statusFilter;
+
       const q = search.trim().toLowerCase();
+
       const matchesSearch =
-        !q || r.product.toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+        !q ||
+        r.title.toLowerCase().includes(q) ||
+        String(r.id).includes(q);
+
       return matchesStatus && matchesSearch;
     });
   }, [rfqs, statusFilter, search]);
@@ -135,39 +175,99 @@ export default function RFQsPage() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handleCreateRFQ = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateRFQ = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const product = String(formData.get("product") || "").trim();
-    const qty = String(formData.get("qty") || "").trim();
-    const notes = String(formData.get("notes") || "").trim();
-    if (!product || !qty) return;
 
-    setSubmitting(true);
-    setTimeout(() => {
-      const nextNum = 1043 + rfqs.filter((r) => r.id.startsWith("RFQ-")).length;
-      const newRFQ: RFQ = {
-        id: `RFQ-${nextNum}`,
-        product,
-        qty,
-        status: "Pending",
-        date: todayLabel(),
-        notes: notes || "No additional notes provided.",
-        quotes: [],
-      };
-      setRfqs((prev) => [newRFQ, ...prev]);
-      setSubmitting(false);
+    const form = e.currentTarget;
+
+    const formData = new FormData(form);
+
+    const title = String(formData.get("product") || "").trim();
+    const quantity = Number(formData.get("qty") || 0);
+    const description = String(formData.get("notes") || "").trim();
+
+    if (!title || !quantity) return;
+
+    try {
+      setSubmitting(true);
+
+      const res = await fetch(
+        "http://localhost:3001/rfq",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({
+            title,
+            description,
+            quantity,
+            budget: 0,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to create RFQ");
+      }
+
+      const newRFQ = await res.json();
+
+      console.log("CREATED RFQ:", newRFQ);
+
+      await fetchRFQs();
+
       setNewModalOpen(false);
+
       form.reset();
-      showToast(`${newRFQ.id} submitted successfully`);
-    }, 600);
+
+      showToast(`RFQ-${String(newRFQ.id).padStart(4, "0")} submitted successfully`);
+
+    } catch (error) {
+      console.log(error);
+      showToast("Failed to submit RFQ");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const closeRFQ = (id: string) => {
-    setRfqs((prev) => prev.map((r) => (r.id === id ? { ...r, status: "Closed" } : r)));
-    setDetailRFQ((prev) => (prev && prev.id === id ? { ...prev, status: "Closed" } : prev));
-    showToast(`${id} marked as closed`);
+  const updateRFQStatus = async (
+    id: number,
+    status: string
+  ) => {
+    try {
+      const res = await fetch(
+        `http://localhost:3001/rfq/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({
+            status,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      await fetchRFQs();
+
+      setDetailRFQ(null);
+
+      showToast(
+        status === "Closed"
+          ? "RFQ marked as closed"
+          : "RFQ reopened"
+      );
+
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -206,11 +306,10 @@ export default function RFQsPage() {
               key={s}
               type="button"
               onClick={() => setStatusFilter(s)}
-              className={`text-xs font-mono uppercase tracking-widest2 px-3 py-2 border transition-colors ${
-                statusFilter === s
-                  ? "border-ink bg-ink text-paper"
-                  : "border-line text-ash hover:border-ash"
-              }`}
+              className={`text-xs font-mono uppercase tracking-widest2 px-3 py-2 border transition-colors ${statusFilter === s
+                ? "border-ink bg-ink text-paper"
+                : "border-line text-ash hover:border-ash"
+                }`}
             >
               {s}
             </button>
@@ -233,7 +332,7 @@ export default function RFQsPage() {
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium text-sm sm:text-base">{r.product}</p>
+                  <p className="font-medium text-sm sm:text-base">{r.title}</p>
                   <span
                     className={`inline-block px-2.5 py-1 text-[10px] font-medium rounded-full whitespace-nowrap ${STATUS_STYLES[r.status]}`}
                   >
@@ -241,17 +340,17 @@ export default function RFQsPage() {
                   </span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs text-smoke font-mono">
-                  <span>{r.id}</span>
+                  <span>RFQ-{String(r.id).padStart(4, "0")}</span>
                   <span>•</span>
-                  <span>Qty: {r.qty}</span>
+                  <span>Qty: {r.quantity}</span>
                   <span>•</span>
-                  <span>{r.date}</span>
+                  <span>{new Date(r.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                {r.quotes.length > 0 && (
+                {r.quotations.length > 0 && (
                   <span className="inline-flex items-center gap-1 text-xs text-ash font-mono">
-                    <MessageSquareText size={13} /> {r.quotes.length} quotes received
+                    <MessageSquareText size={13} /> {r.quotations.length} quotes received
                   </span>
                 )}
                 <button
@@ -352,7 +451,7 @@ export default function RFQsPage() {
               <div>
                 <p className="font-mono text-xs text-smoke">{detailRFQ.id}</p>
                 <h2 className="mt-1 font-display font-bold text-lg tracking-tightest break-words">
-                  {detailRFQ.product}
+                  {detailRFQ.title}
                 </h2>
               </div>
               <button
@@ -369,25 +468,25 @@ export default function RFQsPage() {
               <span className={`inline-block px-2.5 py-1 text-[10px] font-medium rounded-full ${STATUS_STYLES[detailRFQ.status]}`}>
                 {detailRFQ.status}
               </span>
-              <span className="text-xs text-smoke font-mono">Qty: {detailRFQ.qty}</span>
-              <span className="text-xs text-smoke font-mono">• {detailRFQ.date}</span>
+              <span className="text-xs text-smoke font-mono">Qty: {detailRFQ.quantity}</span>
+              <span className="text-xs text-smoke font-mono">• {new Date(detailRFQ.createdAt).toLocaleDateString()}</span>
             </div>
 
             <p className="text-sm text-ash leading-relaxed border-t border-line pt-4">
-              {detailRFQ.notes}
+              {detailRFQ.description}
             </p>
 
             <div className="mt-5">
               <p className="font-mono text-xs uppercase tracking-widest2 text-smoke mb-3">
-                Quotes ({detailRFQ.quotes.length})
+                Quotes ({detailRFQ.quotations.length})
               </p>
-              {detailRFQ.quotes.length === 0 ? (
+              {detailRFQ.quotations.length === 0 ? (
                 <p className="text-sm text-smoke border border-dashed border-line p-4 text-center">
                   No quotes received yet. Suppliers typically respond within 24 hours.
                 </p>
               ) : (
                 <div className="border border-line divide-y divide-line">
-                  {detailRFQ.quotes.map((q, i) => (
+                  {detailRFQ.quotations.map((q, i) => (
                     <div key={i} className="p-3.5 flex items-start gap-3">
                       <span className="w-8 h-8 rounded-full bg-ink text-paper flex items-center justify-center shrink-0">
                         <Building2 size={13} />
@@ -406,15 +505,20 @@ export default function RFQsPage() {
               )}
             </div>
 
-            {detailRFQ.status !== "Closed" && (
-              <button
-                type="button"
-                onClick={() => closeRFQ(detailRFQ.id)}
-                className="mt-6 w-full border border-line text-xs font-mono uppercase tracking-widest2 px-5 py-2.5 hover:border-ash transition-colors"
-              >
-                Mark as Closed
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() =>
+                updateRFQStatus(
+                  detailRFQ.id,
+                  detailRFQ.status === "Closed" ? "Open" : "Closed"
+                )
+              }
+              className="mt-6 w-full border border-line text-xs font-mono uppercase tracking-widest2 px-5 py-2.5 hover:border-ash transition-colors"
+            >
+              {detailRFQ.status === "Closed"
+                ? "Mark as Open"
+                : "Mark as Closed"}
+            </button>
           </div>
         </div>
       )}

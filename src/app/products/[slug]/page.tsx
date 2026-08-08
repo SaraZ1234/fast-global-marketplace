@@ -1,7 +1,11 @@
-import type { Metadata } from "next";
+"use client";
+// import type { Metadata } from "next";
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getStoredUser } from "@/lib/auth";
 import {
   ArrowUpRight,
   ShieldCheck,
@@ -49,20 +53,26 @@ interface SpecItem {
 }
 
 interface DetailedProduct {
-  slug: string;
+  id?: number;
   code?: string;
+  slug: string;
   name: string;
-  industry: string;
-  description: string;
-  price: string;
-  moq: string;
-  leadTime: string;
-  image: string;
-  supplierSlug?: string;
-  supplierName?: string;
+  description?: string;
+  price: string | number;
+  moq?: string | number;
+  leadTime?: string | number;
+  image?: string;
+  brand?: string;
+  modelNumber?: string;
   country?: string;
+  supplierName?: string;
+  industry?: string;
+  supplierSlug?: string;
   verified?: boolean;
-  specs: SpecItem[];
+  specs?: SpecItem[];
+  vendor?: any;
+  category?: any;
+  subCategory?: any;
 }
 
 // Unified catalog gatherer
@@ -120,25 +130,31 @@ function getAllProducts(): DetailedProduct[] {
   ];
 }
 
-export function generateStaticParams() {
-  const all = getAllProducts();
-  return all.map((p) => ({ slug: p.slug }));
-}
+// export function generateStaticParams() {
+//   const all = getAllProducts();
+//   return all.map((p) => ({ slug: p.slug }));
+// }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const all = getAllProducts();
-  const product = all.find((p) => p.slug === params.slug);
-  return { title: product ? `${product.name} | Product Details` : "Product Details" };
-}
+// export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+//   const all = getAllProducts();
+//   const product = all.find((p) => p.slug === params.slug);
+//   return { title: product ? `${product.name} | Product Details` : "Product Details" };
+// }
 
 // --- Deterministic trust / commerce signals (no client state required) ---
 
-function hashString(str: string): number {
+function hashString(str: string | undefined): number {
+  if (!str) {
+    console.log("hashString received:", str);
+    return 0;
+  }
+
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) - hash + str.charCodeAt(i);
     hash |= 0;
   }
+
   return Math.abs(hash);
 }
 
@@ -152,12 +168,24 @@ function getTrustSignals(slug: string) {
   return { rating, reviewCount, ordersCount, responseRate, responseTime };
 }
 
-function parsePriceValue(price: string): number | null {
-  const match = price.replace(/,/g, "").match(/(\d+(\.\d+)?)/);
-  return match ? parseFloat(match[1]) : null;
+function parsePriceValue(price: string | number | null | undefined): number | null {
+  console.log("Price value:", price, typeof price);
+
+  if (price === null || price === undefined) return null;
+
+  if (typeof price === "number") {
+    return price;
+  }
+
+  if (typeof price === "string") {
+    const match = price.replace(/,/g, "").match(/(\d+(\.\d+)?)/);
+    return match ? parseFloat(match[1]) : null;
+  }
+
+  return null;
 }
 
-function getPriceTiers(price: string, moq: string) {
+function getPriceTiers(price: string | number, moq?: string | number) {
   const base = parsePriceValue(price);
   if (base === null) return null;
 
@@ -187,7 +215,11 @@ function getShippingInfo(slug: string) {
 
 function getGalleryItems(product: DetailedProduct) {
   const h = hashString(product.slug);
-  const base = product.image;
+  const base =
+    typeof product.image === "string" && product.image
+      ? product.image
+      : "https://picsum.photos/600/600";
+
   const sep = base.includes("?") ? "&" : "?";
   return [
     { type: "image" as const, src: base, label: "Front View" },
@@ -249,11 +281,109 @@ function getPackagingImages(product: DetailedProduct) {
   return gallery.map((g, i) => ({ src: g.src, label: labels[i % labels.length] }));
 }
 
-export default function ProductDetail({ params }: { params: { slug: string } }) {
-  const all = getAllProducts();
-  const product = all.find((p) => p.slug === params.slug);
 
-  if (!product) return notFound();
+export default function ProductDetail({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const response = await apiRequest("/product");
+
+        const products = response.data || response;
+
+        const found = products.find(
+          (p: any) =>
+            p.slug === params.slug ||
+            String(p.id) === params.slug
+        );
+
+        console.log("FOUND PRODUCT:", JSON.stringify(found, null, 2));
+
+        if (!found) {
+          setProduct(null);
+          return;
+        }
+
+        setProduct({
+          ...found,
+
+          slug: found.slug || String(found.id),
+
+          industry: found.category?.name || "General",
+
+          supplierName:
+            found.vendor?.companyName || "Unknown Supplier",
+
+          country:
+            found.vendor?.country || "Pakistan",
+
+          image:
+            found.image ||
+            "https://picsum.photos/600/600",
+
+          leadTime:
+            found.leadTime ||
+            "15 - 30 Days",
+
+          moq:
+            found.moq ||
+            "Negotiable",
+
+          specs: [
+            {
+              label: "Brand",
+              value: found.brand || "Not Specified",
+            },
+            {
+              label: "Model Number",
+              value: found.modelNumber || "Not Specified",
+            },
+            {
+              label: "Stock Available",
+              value: `${found.stock ?? 0} units`,
+            },
+            {
+              label: "Category",
+              value: found.category?.name || "General",
+            },
+            {
+              label: "Sub Category",
+              value: found.subCategory?.name || "General",
+            },
+          ],
+        });
+
+
+        // setProduct(found);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProduct();
+  }, [params.slug]);
+
+  if (loading) {
+    return <div className="container-x py-20">Loading...</div>;
+  }
+
+  console.log("Product:", product);
+
+  if (!product) {
+    return (
+      <div style={{ padding: "40px" }}>
+        Product not found
+      </div>
+    );
+  }
 
   // Matched supplier logic
   const supplier = product.supplierSlug
@@ -261,19 +391,104 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
     : null;
 
   // Related products from same category
-  const related = all
-    .filter((p) => p.slug !== product.slug && p.industry.toLowerCase() === product.industry.toLowerCase())
-    .slice(0, 3);
+  const related: any[] = [];
 
-  const { rating, reviewCount, ordersCount, responseRate, responseTime } = getTrustSignals(product.slug);
-  const priceTiers = getPriceTiers(product.price, product.moq);
-  const shipping = getShippingInfo(product.slug);
+  const slug = product.slug || product.id?.toString() || "";
+
+  const { rating, reviewCount, ordersCount, responseRate, responseTime } =
+    getTrustSignals(slug); const priceTiers = getPriceTiers(product.price, product.moq);
+  const shipping = getShippingInfo(slug);
   const galleryItems = getGalleryItems(product);
-  const reviews = getReviews(product.slug);
-  const certifications = getCertifications(product.slug);
+  const reviews = getReviews(slug);
+  const certifications = getCertifications(slug);
   const factoryImages = getFactoryImages(product);
   const packagingImages = getPackagingImages(product);
-  const seedHash = hashString(product.slug);
+  const seedHash = hashString(slug);
+
+  const handleAddToCart = async () => {
+
+    try {
+
+      const user = getStoredUser();
+
+      console.log("ADD CART USER:", user);
+      console.log(
+        "LOCAL STORAGE USER:",
+        localStorage.getItem("user")
+      );
+
+      if (!user) {
+        window.location.href = "/login";
+        return;
+      }
+
+
+      await apiRequest(`/cart/${user.id}/add`, {
+        method: "POST",
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: 1,
+        }),
+      });
+
+
+      window.location.href = "/cart";
+
+
+    } catch (error) {
+
+      console.error(
+        "ADD TO CART FAILED:",
+        error
+      );
+
+    }
+
+  };
+
+  const handleAddToWishlist = async () => {
+
+    try {
+
+      const user = getStoredUser();
+
+      console.log("WISHLIST USER:", user);
+
+
+      if (!user) {
+        window.location.href = "/login";
+        return;
+      }
+
+
+      const response = await apiRequest("/wishlist", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: user.id,
+          productId: product.id,
+        }),
+      });
+
+
+      console.log(
+        "WISHLIST RESPONSE:",
+        response
+      );
+
+
+      alert("Product added to wishlist");
+
+
+    } catch (error) {
+
+      console.error(
+        "ADD WISHLIST FAILED:",
+        error
+      );
+
+    }
+
+  };
 
   return (
     <>
@@ -390,7 +605,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                 </div>
               )}
 
-              <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4">
+              {/* <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4">
                 <PrimaryButton href="/contact" icon={ArrowUpRight}>
                   Request Quotation
                 </PrimaryButton>
@@ -399,6 +614,30 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                     View Supplier
                   </GhostButton>
                 )}
+              </div> */}
+
+              <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 sm:gap-4">
+
+
+                <button
+                  onClick={handleAddToCart}
+                >
+                  Add to Cart
+                </button>
+
+
+                <button
+                  onClick={handleAddToWishlist}
+                >
+                  Add to Wishlist
+                </button>
+
+
+                <PrimaryButton href="/contact" icon={ArrowUpRight}>
+                  Request Quotation
+                </PrimaryButton>
+
+
               </div>
 
               <div className="mt-4">
@@ -420,7 +659,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
           <div className="container-x py-8 sm:py-14 md:py-20">
             <Eyebrow>Specifications</Eyebrow>
             <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line max-w-3xl">
-              {product.specs.map((s, idx) => (
+              {product.specs.map((s: { label: string; value: string }, idx: number) => (
                 <div
                   key={`${s.label}-${idx}`}
                   className="bg-paper p-4 sm:p-5 flex items-center justify-between gap-3 sm:gap-4"

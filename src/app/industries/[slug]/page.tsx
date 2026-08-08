@@ -4,15 +4,26 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Users, Package, ShieldCheck } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { Eyebrow, PrimaryButton, GhostButton } from "@/components/UI";
-import { industries } from "@/lib/data";
+// import { industries } from "@/lib/data";
+import { apiRequest } from "@/lib/api";
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const response = await apiRequest("/category");
+  const { slug } = await params;
 
-export function generateStaticParams() {
-  return industries.map((ind) => ({ slug: ind.slug }));
-}
+  const categories = response.data || response;
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const ind = industries.find((i) => i.slug === params.slug);
-  return { title: ind ? ind.name : "Industry" };
+  const ind = categories.find(
+    (c: any) =>
+      c.name.toLowerCase().replace(/\s+/g, "-") === slug
+  );
+
+  return {
+    title: ind ? ind.name : "Industry",
+  };
 }
 
 // Deterministic hash so each industry always renders the same supplier/product
@@ -35,12 +46,34 @@ function getIndustryStats(slug: string) {
   };
 }
 
-export default function IndustryDetail({ params }: { params: { slug: string } }) {
-  const ind = industries.find((i) => i.slug === params.slug);
+export default async function IndustryDetail({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const categoryResponse = await apiRequest("/category");
+  const subResponse = await apiRequest("/subcategories");
+
+  const categories = categoryResponse.data || categoryResponse;
+  const subCategories = subResponse.data || subResponse;
+
+  const ind = categories.find(
+    (c: any) =>
+      c.name.toLowerCase().replace(/\s+/g, "-") === params.slug
+  );
+
   if (!ind) return notFound();
 
-  const others = industries.filter((i) => i.slug !== ind.slug).slice(0, 3);
-  const { suppliers, products, verifiedRate } = getIndustryStats(ind.slug);
+  const categorySubs = subCategories.filter(
+    (sub: any) => sub.categoryId === ind.id
+  );
+
+  const others = categories
+    .filter((c: any) => c.id !== ind.id)
+    .slice(0, 3);
+  const categorySlug = ind.name.toLowerCase().replace(/\s+/g, "-");
+
+const { suppliers, products, verifiedRate } = getIndustryStats(categorySlug);
 
   return (
     <div className="overflow-x-hidden">
@@ -69,7 +102,7 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
             <div className="lg:col-span-8">
               <Reveal>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Eyebrow>Category {ind.code}</Eyebrow>
+                  <Eyebrow>Category {ind.id}</Eyebrow>
                   <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-emerald-700 border border-line px-1.5 py-0.5">
                     <ShieldCheck size={11} className="text-emerald-600 shrink-0" />
                     {verifiedRate}% Verified Suppliers
@@ -79,7 +112,7 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
                   {ind.name}
                 </h1>
                 <p className="mt-6 text-ash max-w-xl text-sm sm:text-base leading-relaxed">
-                  {ind.blurb}
+                  {ind.description}
                 </p>
 
                 {/* Stats row */}
@@ -105,7 +138,7 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
                       <ShieldCheck size={12} className="shrink-0" /> Sub-Categories
                     </p>
                     <p className="mt-1 font-display font-bold text-lg sm:text-2xl tracking-tightest">
-                      {ind.items.length}
+                      {categorySubs.length}
                     </p>
                   </div>
                 </div>
@@ -131,19 +164,19 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
             What buyers source here.
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line">
-            {ind.items.map((item, i) => (
-              <Reveal key={item} delay={(i % 4) * 0.05}>
+            {categorySubs.map((item: any, i: number) => (
+              <Reveal key={item.name} delay={(i % 4) * 0.05}>
                 <div className="group bg-paper p-4 sm:p-6 h-full card-hover border border-transparent transition-all duration-300 hover:border-ink/10 hover:-translate-y-0.5 hover:shadow-sm">
                   <div className="flex items-center justify-between gap-2">
                     <span className="idx text-xs text-smoke">
-                      {ind.code}.{String(i + 1).padStart(2, "0")}
+                      {ind.id}.{String(i + 1).padStart(2, "0")}
                     </span>
                     <ArrowUpRight
                       size={13}
                       className="shrink-0 text-smoke opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 hidden sm:block"
                     />
                   </div>
-                  <p className="mt-3 font-medium text-sm sm:text-base break-words">{item}</p>
+                  <p className="mt-3 font-medium text-sm sm:text-base break-words">{item.name}</p>
                 </div>
               </Reveal>
             ))}
@@ -155,17 +188,18 @@ export default function IndustryDetail({ params }: { params: { slug: string } })
         <div className="container-x py-10 sm:py-16 md:py-20">
           <Eyebrow>Related Industries</Eyebrow>
           <div className="mt-5 sm:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-px bg-line border border-line">
-            {others.map((o, i) => {
-              const stats = getIndustryStats(o.slug);
+            {others.map((o: any, i: number) => {
+              const slug = o.name.toLowerCase().replace(/\s+/g, "-");
+              const stats = getIndustryStats(slug);
               return (
-                <Reveal key={o.slug} delay={i * 0.06}>
+                <Reveal key={o.id} delay={i * 0.06}>
                   <Link
-                    href={`/industries/${o.slug}`}
+                    href={`/industries/${slug}`}
                     className="group flex flex-col justify-between h-full bg-paper p-5 sm:p-6 card-hover border border-transparent transition-all duration-300 hover:border-ink/10 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="idx text-xs text-smoke">{o.code}</span>
+                        <span className="idx text-xs text-smoke">{o.id}</span>
                         <span className="inline-flex items-center gap-1 text-[9px] font-mono uppercase tracking-wide text-emerald-700 border border-line px-1.5 py-0.5 shrink-0">
                           <ShieldCheck size={10} className="text-emerald-600 shrink-0" />
                           Verified

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { apiRequest } from "@/lib/api";
 import { ArrowUpRight, Building2, Package, Globe2, ShieldCheck, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
 import { PageHero } from "@/components/UI";
-import { industries } from "@/lib/data";
+// import { industries } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Industries" };
 
@@ -25,14 +26,22 @@ function getIndustryStats(slug: string) {
   return { suppliers, products };
 }
 
-const overviewStats = [
-  { icon: Building2, value: `${industries.length}`, label: "Sourcing Categories" },
+const overviewStats = (count: number) => [
+  { icon: Building2, value: `${count}`, label: "Sourcing Categories" },
   { icon: Users, value: "10,000+", label: "Verified Suppliers" },
   { icon: Package, value: "500,000+", label: "Product Listings" },
   { icon: Globe2, value: "150+", label: "Countries Served" },
 ];
 
-export default function IndustriesPage() {
+export default async function IndustriesPage() {
+  const response = await apiRequest("/category");
+
+  const industries = response.data || response;
+
+  console.log("Categories from API:", industries);
+  console.log("Category count:", industries.length);
+
+  const stats = overviewStats(industries.length);
   return (
     <div className="overflow-x-hidden">
       <PageHero
@@ -45,7 +54,7 @@ export default function IndustriesPage() {
       <section className="border-b border-line bg-bone">
         <div className="container-x py-6 sm:py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line border border-line">
-            {overviewStats.map((s, idx) => (
+            {stats.map((s, idx) => (
               <Reveal key={s.label} delay={idx * 0.06}>
                 <div className="bg-paper px-3 py-4 sm:px-5 sm:py-5 flex flex-col items-center text-center gap-1.5 sm:gap-2">
                   <s.icon size={16} className="text-ink shrink-0 sm:size-[18px]" />
@@ -76,17 +85,20 @@ export default function IndustriesPage() {
           </nav>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-line border border-line">
-            {industries.map((ind, i) => {
-              const { suppliers, products } = getIndustryStats(ind.slug);
+            {industries.map((ind: any, i: number) => {
+              const slug = ind.name.toLowerCase().replace(/\s+/g, "-");
+
+              const { suppliers, products } = getIndustryStats(slug);
+
               return (
-                <Reveal key={ind.slug} delay={(i % 6) * 0.05}>
+                <Reveal key={ind.id} delay={(i % 6) * 0.05}>
                   <Link
-                    href={`/industries/${ind.slug}`}
+                    href={`/industries/${slug}`}
                     className="group relative flex flex-col justify-between bg-paper p-5 sm:p-7 md:p-8 h-full card-hover border border-transparent transition-all duration-300 hover:border-ink/10 hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/40"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="idx text-xs text-smoke">{ind.code}</span>
+                        <span className="idx text-xs text-smoke">#{ind.id}</span>
                         <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wide text-emerald-700 border border-line px-1.5 py-0.5 shrink-0">
                           <ShieldCheck size={11} className="text-emerald-600 shrink-0" />
                           Verified
@@ -97,18 +109,16 @@ export default function IndustriesPage() {
                         {ind.name}
                       </h2>
                       <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-ash leading-relaxed">
-                        {ind.blurb}
+                        {ind.description}
                       </p>
 
                       <div className="mt-4 sm:mt-5 flex flex-wrap gap-1.5 sm:gap-2">
-                        {ind.items.slice(0, 3).map((it) => (
-                          <span
-                            key={it}
-                            className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wide text-smoke border border-line px-2 py-1 break-words transition-colors duration-300 group-hover:border-ink/30 group-hover:text-ink"
-                          >
-                            {it}
-                          </span>
-                        ))}
+                        <span
+                          className="text-[10px] sm:text-[11px] font-mono uppercase tracking-wide text-smoke border border-line px-2 py-1"
+                        >
+                          {ind.description}
+                        </span>
+
                       </div>
                     </div>
 
