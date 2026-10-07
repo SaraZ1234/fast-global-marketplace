@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { label: "Orders", href: "/buyer-dashboard/orders", icon: Package },
   { label: "RFQs", href: "/buyer-dashboard/rfqs", icon: FileText },
   { label: "Wishlist", href: "/buyer-dashboard/wishlist", icon: Heart },
-  { label: "Messages", href: "/buyer-dashboard/messages", icon: MessageSquare },
+  // { label: "Messages", href: "/buyer-dashboard/messages", icon: MessageSquare },
   { label: "Profile", href: "/buyer-dashboard/profile", icon: User },
   { label: "Settings", href: "/buyer-dashboard/settings", icon: Settings2 },
 ];

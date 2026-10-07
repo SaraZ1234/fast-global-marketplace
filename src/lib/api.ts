@@ -10,16 +10,21 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   console.log("TOKEN FROM FRONTEND:", token);
 
-  const response = await fetch(`${API_URL}${endpoint}?_=${Date.now()}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && {
-        Authorization: `Bearer ${token}`,
-      }),
-      ...options.headers,
+  const separator = endpoint.includes("?") ? "&" : "?";
+
+  const response = await fetch(
+    `${API_URL}${endpoint}${separator}_=${Date.now()}`,
+    {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && {
+          Authorization: `Bearer ${token}`,
+        }),
+        ...options.headers,
+      },
     },
-  });
+  );
 
   let data;
 

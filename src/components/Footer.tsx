@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -10,6 +11,8 @@ import {
   Youtube,
   Instagram,
 } from "lucide-react";
+import { useState } from "react";
+
 
 const columns: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -80,7 +83,15 @@ const socialLinks = [
 
 const paymentMethods = ["Visa", "Mastercard", "Amex", "PayPal", "Wire Transfer", "T/T"];
 
+
+
 export default function Footer() {
+
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
+
+
   return (
     <footer className="bg-ink text-paper">
       {/* Trust strip */}
@@ -107,24 +118,45 @@ export default function Footer() {
               <h3 className="font-display font-bold text-base sm:text-lg tracking-tightest">
                 Stay ahead of the market
               </h3>
+
               <p className="text-sm text-smoke mt-1">
                 Get sourcing insights, supplier updates, and platform news in your inbox.
               </p>
             </div>
-            <form className="flex flex-col xs:flex-row w-full lg:w-auto gap-3">
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                if (!email.trim()) return;
+
+                setSubscribed(true);
+                setEmail("");
+              }}
+              className="flex flex-col xs:flex-row w-full lg:w-auto gap-3"
+            >
               <input
                 type="email"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your business email"
                 className="flex-1 lg:w-72 bg-paper/5 border border-paper/20 px-4 py-2.5 text-sm text-paper placeholder:text-smoke focus:outline-none focus:border-paper/50 transition-colors min-w-0"
               />
+
               <button
                 type="submit"
                 className="bg-paper text-ink font-mono text-xs uppercase tracking-widest2 px-6 py-2.5 hover:bg-bone transition-colors whitespace-nowrap"
               >
-                Subscribe
+                {subscribed ? "Subscribed ✓" : "Subscribe"}
               </button>
             </form>
+
+            {subscribed && (
+              <p className="text-sm text-paper">
+                Thanks! You’re subscribed.
+              </p>
+            )}
           </div>
         </div>
       </div>

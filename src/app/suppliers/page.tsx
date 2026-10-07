@@ -19,7 +19,7 @@ interface Supplier {
 }
 
 export default async function SuppliersPage() {
-  const response = await apiRequest("/public/vendors");
+  const response = await apiRequest("/vendors/public");
 
   const suppliers: Supplier[] = response.data || response;
   return (

@@ -22,12 +22,14 @@ export const ROLE = {
   ADMIN: 1,
   VENDOR: 2,
   BUYER: 3,
+  SELLER: 4,
 } as const;
 
 const ROLE_ROUTES: Record<number, string> = {
   [ROLE.BUYER]: "/buyer-dashboard",
   [ROLE.VENDOR]: "/dashboard/vendor",
   [ROLE.ADMIN]: "/admin/dashboard",
+  [ROLE.SELLER]: "/seller/dashboard",
 };
 
 const DEFAULT_ROUTE = "/dashboard/buyer";

@@ -92,6 +92,9 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  const [transactionReference, setTransactionReference] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+
   useEffect(() => {
     async function fetchCart() {
       try {
@@ -163,28 +166,49 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     const nextErrors: Errors = {};
+
     (Object.keys(values) as (keyof ShippingValues)[]).forEach((key) => {
       const message = validateField(key, values[key]);
-      if (message) nextErrors[key] = message;
+
+      if (message) {
+        nextErrors[key] = message;
+      }
     });
 
     const hasPaymentError = !paymentMethod;
-    setPaymentError(hasPaymentError ? "Choose a payment method to continue." : "");
+
+    setPaymentError(
+      hasPaymentError ? "Choose a payment method to continue." : ""
+    );
+
     setErrors(nextErrors);
 
     if (Object.keys(nextErrors).length > 0 || hasPaymentError) {
-      // move focus to the first field that needs attention
       const firstInvalid = Object.keys(nextErrors)[0];
+
       if (firstInvalid) {
         document.getElementById(firstInvalid)?.focus();
       }
+
       return;
+    }
+
+    // Bank transfer validation
+    if (paymentMethod === "bank-transfer") {
+      if (!transactionReference.trim()) {
+        setPaymentError("Enter your bank transaction/reference number.");
+        return;
+      }
+
+      if (!proofFile) {
+        setPaymentError("Please upload your payment proof.");
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
-
       const user = getStoredUser();
 
       if (!user) {
@@ -192,45 +216,71 @@ export default function CheckoutPage() {
         return;
       }
 
-
+      // Create the order first
       const response = await apiRequest("/order/checkout", {
         method: "POST",
         body: JSON.stringify({
-
           userId: user.id,
-
           paymentMethod: paymentMethod,
-
+          fullName: values.fullName,
+          company: values.company,
+          email: values.email,
+          phone: values.phone,
+          address: values.address,
+          city: values.city,
+          country: values.country,
+          postalCode: values.postalCode,
         }),
       });
 
+      console.log("ORDER CREATED:", response);
 
-      console.log(
-        "ORDER CREATED:",
-        response
-      );
+      const createdOrderId = response?.order?.id;
 
+      if (!createdOrderId) {
+        console.error("Invalid order response:", response);
+        return;
+      }
 
-      setOrderId(
-        String(response.order.id)
-      );
+      // Submit Bank Transfer proof
+      if (paymentMethod === "bank-transfer") {
+        const proofImage = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
 
+          reader.onload = () => {
+            if (typeof reader.result === "string") {
+              resolve(reader.result);
+            } else {
+              reject(new Error("Could not read payment proof."));
+            }
+          };
 
-    }
-    catch (error) {
+          reader.onerror = () => {
+            reject(new Error("Could not read payment proof."));
+          };
 
-      console.error(
-        "ORDER FAILED:",
-        error
-      );
+          if (!proofFile) return;
+          reader.readAsDataURL(proofFile);
+        });
 
-    }
-    finally {
+        await apiRequest("/payment/bank-transfer/proof", {
+          method: "POST",
+          body: JSON.stringify({
+            orderId: Number(createdOrderId),
+            transactionReference: transactionReference.trim(),
+            proofImage,
+          }),
+        });
 
+        console.log("BANK TRANSFER PROOF SUBMITTED");
+      }
+
+      setOrderId(String(createdOrderId));
+    } catch (error) {
+      console.error("ORDER FAILED:", error);
+    } finally {
       setIsSubmitting(false);
-
     }
-
   };
 
   return (
@@ -270,8 +320,17 @@ export default function CheckoutPage() {
                   onChange={(id) => {
                     setPaymentMethod(id);
                     setPaymentError("");
+
+                    if (id !== "bank-transfer") {
+                      setTransactionReference("");
+                      setProofFile(null);
+                    }
                   }}
                   error={paymentError}
+                  transactionReference={transactionReference}
+                  onTransactionReferenceChange={setTransactionReference}
+                  proofFile={proofFile}
+                  onProofFileChange={setProofFile}
                 />
               </Reveal>
             </div>

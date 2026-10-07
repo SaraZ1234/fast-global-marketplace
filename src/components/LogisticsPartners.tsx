@@ -10,15 +10,15 @@ import { SectionHeading } from "@/components/UI";
 const logisticsPartners = [
   {
     name: "DHL",
-    logo: "https://placehold.co/200x64/f5f4f0/1a1a1a?text=DHL&font=montserrat",
+    logo: "https://cdn.simpleicons.org/dhl",
   },
   {
     name: "FedEx",
-    logo: "https://placehold.co/200x64/f5f4f0/1a1a1a?text=FedEx&font=montserrat",
+    logo: "https://cdn.simpleicons.org/fedex",
   },
   {
     name: "Maersk",
-    logo: "https://placehold.co/200x64/f5f4f0/1a1a1a?text=Maersk&font=montserrat",
+    logo: "https://cdn.simpleicons.org/maersk",
   },
 ];
 

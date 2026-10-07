@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import { ArrowUpRight, ArrowRight, ShieldCheck, Globe2, Search, Plus } from "lucide-react";
 import Reveal from "@/components/Reveal";
@@ -13,7 +13,6 @@ import {
   industries,
   buyerFeatures,
   sellerFeatures,
-  marketplaceFeatures,
   whyChooseUs,
   faqs,
 } from "@/lib/data";
@@ -22,7 +21,6 @@ import {
   medicalProducts,
   electronicsProducts,
   fashionProducts,
-  homeFurnitureProducts,
 } from "@/lib/homeProducts";
 import {
   Eyebrow,
@@ -33,7 +31,12 @@ import {
   GhostButton,
 } from "@/components/UI";
 
+// Industries removed from the homepage grid
+const HIDDEN_INDUSTRY = /food|beverage/i;
+
 export default function Home() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
   useEffect(() => {
     apiRequest("/admin/dashboard")
       .then((data) => {
@@ -43,14 +46,25 @@ export default function Home() {
         console.log("ERROR:", error);
       });
   }, []);
+
+  const visibleIndustries = industries.filter(
+    (ind) => !HIDDEN_INDUSTRY.test(ind.slug ?? "") && !HIDDEN_INDUSTRY.test(ind.name ?? "")
+  );
+
+  // Filler cells keep the divider-grid clean when the last row is incomplete
+  const n = visibleIndustries.length;
+  const smFill = (2 - (n % 2)) % 2;
+  const mdFill = (3 - (n % 3)) % 3;
+  const lgFill = (5 - (n % 5)) % 5;
+
   return (
     <div className="overflow-x-hidden">
       {/* HERO */}
       <section className="relative bg-paper border-b border-line overflow-hidden">
         <div className="absolute inset-0 grid-paper opacity-[0.035] pointer-events-none" />
         {/* Ambient glow accents */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-ink/[0.04] blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 -left-24 w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-ink/[0.03] blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-ink/[0.04] blur-3xl pointer-events-none animate-pulse [animation-duration:6s]" />
+        <div className="absolute top-1/3 -left-24 w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-ink/[0.03] blur-3xl pointer-events-none animate-pulse [animation-duration:8s]" />
 
         <div className="container-x relative py-14 sm:py-20 md:py-28 lg:py-32">
           {/* Mobile / tablet: horizontal industry scroller above the hero copy */}
@@ -92,14 +106,8 @@ export default function Home() {
                   </div>
                   <div className="mt-5 sm:mt-6 flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-2 text-sm text-ash">
                     <Link
-                      href="/contact"
-                      className="underline underline-offset-4 decoration-line hover:decoration-ink hover:text-ink transition-colors duration-200"
-                    >
-                      Request Quotation
-                    </Link>
-                    <Link
                       href="/industries"
-                      className="underline underline-offset-4 decoration-line hover:decoration-ink hover:text-ink transition-colors duration-200"
+                      className="underline underline-offset-4 decoration-line hover:decoration-ink hover:text-ink transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
                     >
                       Browse Categories
                     </Link>
@@ -184,7 +192,7 @@ export default function Home() {
                       size={18}
                       className="shrink-0 transition-transform duration-200 group-hover:scale-110"
                     />
-                    AI Product Search
+                    Product Search
                   </div>
                 </Reveal>
               </div>
@@ -204,7 +212,7 @@ export default function Home() {
             />
             <Link
               href="/industries"
-              className="hidden md:inline-flex items-center gap-2 text-sm font-medium underline underline-offset-4 decoration-line hover:decoration-ink transition-colors duration-200 group"
+              className="hidden md:inline-flex items-center gap-2 text-sm font-medium underline underline-offset-4 decoration-line hover:decoration-ink transition-colors duration-200 group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
               View all industries
               <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-1" />
@@ -212,11 +220,11 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-line border border-line">
-            {industries.map((ind, i) => (
+            {visibleIndustries.map((ind, i) => (
               <Reveal key={ind.slug} delay={(i % 5) * 0.05}>
                 <Link
                   href={`/industries/${ind.slug}`}
-                  className="group block bg-paper p-5 sm:p-6 h-full card-hover border border-transparent transition-all duration-300 hover:border-ink/15 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)]"
+                  className="group block bg-paper p-5 sm:p-6 h-full card-hover border border-transparent transition-all duration-300 hover:border-ink/15 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
                 >
                   <span className="idx text-xs text-smoke transition-colors duration-200 group-hover:text-ink">
                     {ind.code}
@@ -230,6 +238,17 @@ export default function Home() {
                   </span>
                 </Link>
               </Reveal>
+            ))}
+
+            {/* Filler cells (decorative) so the last row has no gray gaps */}
+            {Array.from({ length: smFill }).map((_, k) => (
+              <div key={`sf-${k}`} aria-hidden className="hidden sm:block md:hidden bg-paper" />
+            ))}
+            {Array.from({ length: mdFill }).map((_, k) => (
+              <div key={`mf-${k}`} aria-hidden className="hidden md:block lg:hidden bg-paper" />
+            ))}
+            {Array.from({ length: lgFill }).map((_, k) => (
+              <div key={`lf-${k}`} aria-hidden className="hidden lg:block bg-paper" />
             ))}
           </div>
 
@@ -247,7 +266,7 @@ export default function Home() {
         title="Top Picks in Machinery"
         description="Industrial equipment and machine tools from verified manufacturers."
         products={machineryProducts}
-        viewAllHref="/industries/machinery"
+        viewAllHref="/industries/industrial-machinery"
       />
 
       <ProductSection
@@ -274,20 +293,12 @@ export default function Home() {
         viewAllHref="/industries/fashion"
       />
 
-      <ProductSection
-        eyebrow="Home & Furniture"
-        title="Home & Furniture Essentials"
-        description="Furniture, decor, and household goods for every space."
-        products={homeFurnitureProducts}
-        viewAllHref="/industries/home-furniture"
-      />
-
       {/* BUYER / SELLER FEATURES */}
       <section className="bg-paper border-b border-line">
         <div className="container-x py-14 sm:py-20 md:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16">
             <Reveal>
-              <div className="p-6 sm:p-8 border border-line transition-all duration-300 hover:border-ink/20 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+              <div className="h-full p-6 sm:p-8 border border-line transition-all duration-300 hover:border-ink/20 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
                 <Eyebrow>For Buyers</Eyebrow>
                 <h3 className="mt-4 font-display font-bold text-xl sm:text-2xl md:text-3xl tracking-tightest mb-5 sm:mb-6">
                   Source with confidence.
@@ -306,7 +317,7 @@ export default function Home() {
             </Reveal>
 
             <Reveal delay={0.1}>
-              <div className="p-6 sm:p-8 border border-line transition-all duration-300 hover:border-ink/20 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
+              <div className="h-full p-6 sm:p-8 border border-line transition-all duration-300 hover:border-ink/20 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
                 <Eyebrow>For Sellers</Eyebrow>
                 <h3 className="mt-4 font-display font-bold text-xl sm:text-2xl md:text-3xl tracking-tightest mb-5 sm:mb-6">
                   Sell to the world.
@@ -323,33 +334,6 @@ export default function Home() {
                 </div>
               </div>
             </Reveal>
-          </div>
-        </div>
-      </section>
-
-      {/* MARKETPLACE FEATURES */}
-      <section className="border-b border-line bg-ink text-paper">
-        <div className="container-x py-14 sm:py-20 md:py-28">
-          <Reveal>
-            <SectionHeading
-              eyebrow="Marketplace Intelligence"
-              title="Built with AI at the core."
-              description="Discovery, negotiation, and merchandising tools that help the right buyers find the right suppliers, faster."
-            />
-          </Reveal>
-          <div className="mt-10 sm:mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-paper/15">
-            {marketplaceFeatures.map((f, i) => (
-              <Reveal key={f} delay={(i % 4) * 0.05}>
-                <div className="group bg-ink p-5 sm:p-6 h-full transition-all duration-300 hover:bg-paper/[0.06]">
-                  <span className="idx text-xs text-smoke transition-colors duration-200 group-hover:text-paper/70">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="mt-3 font-medium text-sm sm:text-base transition-transform duration-300 group-hover:translate-x-0.5">
-                    {f}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
           </div>
         </div>
       </section>
@@ -400,20 +384,50 @@ export default function Home() {
               </Reveal>
             </div>
             <div className="lg:col-span-8">
-              {faqs.slice(0, 4).map((f, i) => (
-                <Reveal key={f.q} delay={i * 0.05}>
-                  <div className="group py-5 sm:py-6 border-b border-line transition-colors duration-200 hover:border-ink/30">
-                    <div className="flex items-start justify-between gap-4">
-                      <h4 className="font-display font-semibold text-base sm:text-lg">{f.q}</h4>
-                      <Plus
-                        size={16}
-                        className="shrink-0 mt-1 text-smoke transition-transform duration-300 group-hover:rotate-45 group-hover:text-ink"
-                      />
+              {faqs.slice(0, 4).map((f, i) => {
+                const isOpen = openFaq === i;
+                return (
+                  <Reveal key={f.q} delay={i * 0.05}>
+                    <div className="border-b border-line">
+                      <button
+                        type="button"
+                        id={`faq-btn-${i}`}
+                        aria-expanded={isOpen}
+                        aria-controls={`faq-panel-${i}`}
+                        onClick={() => setOpenFaq(isOpen ? null : i)}
+                        className="group w-full py-5 sm:py-6 flex items-start justify-between gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                      >
+                        <h4 className="font-display font-semibold text-base sm:text-lg transition-colors duration-200 group-hover:text-ink">
+                          {f.q}
+                        </h4>
+
+                        <Plus
+                          size={16}
+                          className={`shrink-0 mt-1 transition-all duration-300 ${
+                            isOpen ? "rotate-45 text-ink" : "text-smoke group-hover:text-ink"
+                          }`}
+                        />
+                      </button>
+
+                      {/* Smooth expand/collapse without extra dependencies */}
+                      <div
+                        id={`faq-panel-${i}`}
+                        role="region"
+                        aria-labelledby={`faq-btn-${i}`}
+                        className={`grid transition-all duration-300 ease-out ${
+                          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <p className="pb-5 sm:pb-6 text-sm sm:text-base text-ash leading-relaxed">
+                            {f.a}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm sm:text-base text-ash leading-relaxed">{f.a}</p>
-                  </div>
-                </Reveal>
-              ))}
+                  </Reveal>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -421,7 +435,7 @@ export default function Home() {
 
       {/* CTA */}
       <section className="relative bg-paper overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 sm:w-[28rem] sm:h-[28rem] rounded-full bg-ink/[0.04] blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 sm:w-[28rem] sm:h-[28rem] rounded-full bg-ink/[0.04] blur-3xl pointer-events-none animate-pulse [animation-duration:7s]" />
         <div className="absolute bottom-0 right-0 w-56 h-56 sm:w-72 sm:h-72 rounded-full bg-ink/[0.03] blur-3xl pointer-events-none" />
         <div className="container-x relative py-14 sm:py-20 md:py-28 text-center">
           <Reveal>

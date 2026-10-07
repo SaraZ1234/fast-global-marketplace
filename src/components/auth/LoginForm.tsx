@@ -151,12 +151,12 @@ export default function LoginForm() {
           />
           Remember me
         </label>
-        <Link
+        {/* <Link
           href="/forgot-password"
           className="text-sm font-medium text-ink underline underline-offset-4 hover:text-ash transition-colors"
         >
           Forgot password?
-        </Link>
+        </Link> */}
       </div>
 
       <div className="mt-7">

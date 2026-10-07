@@ -96,6 +96,60 @@ function parsePriceValue(price: string): number | null {
   return match ? parseFloat(match[1]) : null;
 }
 
+function getProductImage(product: any): string {
+  if (product.image) {
+    return product.image;
+  }
+
+  const name = product.name.toLowerCase();
+  const category = product.category?.name?.toLowerCase() || "";
+
+  if (name.includes("iphone")) {
+    return "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd";
+  }
+
+  if (name.includes("samsung")) {
+    return "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c";
+  }
+
+  if (
+    name.includes("rice") ||
+    name.includes("basmati")
+  ) {
+    return "https://images.unsplash.com/photo-1586201375761-83865001e31c";
+  }
+
+  if (
+    name.includes("laptop") ||
+    name.includes("dell") ||
+    name.includes("computer")
+  ) {
+    return "https://images.unsplash.com/photo-1496181133206-80ce9b88a853";
+  }
+
+  if (category.includes("electronics")) {
+    return "https://images.unsplash.com/photo-1498049794561-7780e7231661";
+  }
+
+  if (category.includes("fashion")) {
+    return "https://images.unsplash.com/photo-1445205170230-053b83016050";
+  }
+
+  if (category.includes("furniture")) {
+    return "https://images.unsplash.com/photo-1555041469-a586c61ea9bc";
+  }
+
+  if (category.includes("medical")) {
+    return "https://images.unsplash.com/photo-1584982751601-97dcc096659c";
+  }
+
+  if (category.includes("machinery")) {
+    return "https://images.unsplash.com/photo-1581092160607-ee22621dd758";
+  }
+
+  return "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d";
+}
+
 export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
@@ -112,7 +166,7 @@ export default function ProductsPage() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const data = await apiRequest("/product");
+        const data = await apiRequest("/product/approved");
         console.log(data);
         setProducts(data);
       } catch (error) {
@@ -131,13 +185,12 @@ export default function ProductsPage() {
       code: `PRD-${p.id}`,
       name: p.name,
       industry: p.category?.name || "General",
-      price: `PKR ${p.price}`,
-      moq: "1",
+      price: `$ ${p.price}`,
+      moq: p.moq ? String(p.moq) : "1",
       supplier: p.vendor?.companyName,
-      country: "Pakistan",
-      verified: p.vendor?.status === "Approved",
-      image:
-        "https://picsum.photos/seed/" + p.id + "/600/600",
+      country: p.country || p.vendor?.country || "Pakistan",
+      verified: p.vendor?.verified === true || p.vendor?.status === "Approved",
+      image: getProductImage(p),
     }));
   }, [products]);
 

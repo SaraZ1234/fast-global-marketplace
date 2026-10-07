@@ -181,7 +181,9 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <DashboardShell>
+  <>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
         <div>
@@ -239,7 +241,7 @@ export default function AdminDashboardPage() {
       />
 
       {/* Sidebar + content */}
-      <div className="flex gap-8">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <AdminSidebar
           active={activeSection}
           onChange={setActiveSection}
@@ -263,21 +265,29 @@ export default function AdminDashboardPage() {
           )}
 
           {activeSection === "users" && (
-            <UsersSection users={users} onToggleStatus={handleToggleUserStatus} />
+            <UsersSection
+              users={users}
+              onToggleStatus={handleToggleUserStatus}
+            />
           )}
 
           {activeSection === "vendors" && (
-            <VendorsSection vendors={vendors} onSetStatus={handleSetVendorStatus} />
+            <VendorsSection
+              vendors={vendors}
+              onSetStatus={handleSetVendorStatus}
+            />
           )}
 
           {activeSection === "products" && (
             <ProductsSection onCountChange={setPendingProductsCount} />
           )}
 
-          {activeSection === "orders" && <OrdersSection
-            orders={orders}
-            onUpdateStatus={handleUpdateStatus}
-          />}
+          {activeSection === "orders" && (
+            <OrdersSection
+              orders={orders}
+              onUpdateStatus={handleUpdateStatus}
+            />
+          )}
 
           {activeSection === "settings" && <SettingsSection />}
         </div>
@@ -292,6 +302,7 @@ export default function AdminDashboardPage() {
             opacity: 1;
           }
         }
+
         @keyframes fadeUp {
           from {
             opacity: 0;
@@ -303,6 +314,8 @@ export default function AdminDashboardPage() {
           }
         }
       `}</style>
-    </DashboardShell>
-  );
+
+    </div>
+  </>
+);
 }

@@ -30,6 +30,10 @@ import FrequentlyBoughtTogether from "@/components/product/FrequentlyBoughtToget
 import ShippingEstimator from "@/components/product/ShippingEstimator";
 import { products as mainProducts, suppliers } from "@/lib/data";
 import {
+  INTERNATIONAL_MOCK_PRODUCTS,
+  REGIONAL_MOCK_PRODUCTS,
+} from "@/lib/regionalProductsData";
+import {
   machineryProducts,
   medicalProducts,
   electronicsProducts,
@@ -45,6 +49,40 @@ const PRODUCT_IMAGES: Record<string, string> = {
   "modular-office-desk-system": "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80",
   "automotive-led-headlight-kit": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80",
   "hyaluronic-acid-serum-oem": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80",
+
+  "premium-basmati-rice-25kg": "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80",
+
+
+};
+
+const PRODUCT_GALLERIES: Record<string, string[]> = {
+  "iphone-15-pro-max": [
+    "https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1696446701796-da61225697cc?auto=format&fit=crop&w=800&q=80",
+  ],
+
+  "samsung-galaxy-s25": [
+    "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?auto=format&fit=crop&w=800&q=80",
+  ],
+
+  "premium-basmati-rice-25kg": [
+    "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1592997571659-0b21ff64313b?auto=format&fit=crop&w=800&q=80",
+  ],
+
+  "dell-xps-15-laptop": [
+    "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=800&q=80",
+  ],
 };
 
 interface SpecItem {
@@ -143,6 +181,8 @@ function getAllProducts(): DetailedProduct[] {
 
 // --- Deterministic trust / commerce signals (no client state required) ---
 
+
+
 function hashString(str: string | undefined): number {
   if (!str) {
     console.log("hashString received:", str);
@@ -214,23 +254,27 @@ function getShippingInfo(slug: string) {
 // --- New mock data for gallery, reviews, certifications, factory/packaging imagery ---
 
 function getGalleryItems(product: DetailedProduct) {
-  const h = hashString(product.slug);
+  const images = PRODUCT_GALLERIES[product.slug];
+
+  if (images && images.length >= 4) {
+    return [
+      { type: "image" as const, src: images[0], label: "Front View" },
+      { type: "image" as const, src: images[1], label: "Side View" },
+      { type: "image" as const, src: images[2], label: "Packaging" },
+      { type: "image" as const, src: images[3], label: "Product View" },
+    ];
+  }
+
   const base =
     typeof product.image === "string" && product.image
       ? product.image
       : "https://picsum.photos/600/600";
 
-  const sep = base.includes("?") ? "&" : "?";
   return [
     { type: "image" as const, src: base, label: "Front View" },
-    { type: "image" as const, src: `${base}${sep}sig=${h % 89}`, label: "Side View" },
-    { type: "image" as const, src: `${base}${sep}sig=${(h + 37) % 89}`, label: "Packaging" },
-    {
-      type: "video" as const,
-      src: `${base}${sep}sig=${(h + 61) % 89}`,
-      label: "Product Video",
-      videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    },
+    { type: "image" as const, src: base, label: "Side View" },
+    { type: "image" as const, src: base, label: "Packaging" },
+    { type: "image" as const, src: base, label: "Product View" },
   ];
 }
 
@@ -290,51 +334,233 @@ export default function ProductDetail({
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // useEffect(() => {
+  //   async function fetchProduct() {
+  //     try {
+  //       const response = await apiRequest("/product");
+
+  //       const products = response.data || response;
+
+  //       const found = products.find(
+  //         (p: any) =>
+  //           p.slug === params.slug ||
+  //           String(p.id) === params.slug
+  //       );
+
+  //       console.log("FOUND PRODUCT:", JSON.stringify(found, null, 2));
+
+  //       if (!found) {
+  //         setProduct(null);
+  //         return;
+  //       }
+
+  //       setProduct({
+  //         ...found,
+
+  //         slug: found.slug || String(found.id),
+
+  //         industry: found.category?.name || "General",
+
+  //         supplierName:
+  //           found.vendor?.companyName || "Unknown Supplier",
+
+  //         country:
+  //           found.vendor?.country || "Pakistan",
+
+  //         image:
+  //           PRODUCT_IMAGES[found.slug] ||
+  //           found.image ||
+  //           "https://picsum.photos/600/600",
+
+  //         leadTime:
+  //           found.leadTime ||
+  //           "15 - 30 Days",
+
+  //         moq:
+  //           found.moq ||
+  //           "Negotiable",
+
+  //         specs: [
+  //           {
+  //             label: "Brand",
+  //             value: found.brand || "Not Specified",
+  //           },
+  //           {
+  //             label: "Model Number",
+  //             value: found.modelNumber || "Not Specified",
+  //           },
+  //           {
+  //             label: "Stock Available",
+  //             value: `${found.stock ?? 0} units`,
+  //           },
+  //           {
+  //             label: "Category",
+  //             value: found.category?.name || "General",
+  //           },
+  //           {
+  //             label: "Sub Category",
+  //             value: found.subCategory?.name || "General",
+  //           },
+  //         ],
+  //       });
+
+
+  //       // setProduct(found);
+  //     } catch (err) {
+  //       console.error(err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+
+  //   fetchProduct();
+  // }, [params.slug]);
+
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const response = await apiRequest("/product");
-
-        const products = response.data || response;
-
-        const found = products.find(
-          (p: any) =>
+        // 1. Check all static regional products first
+        const regionalProduct = [
+          ...INTERNATIONAL_MOCK_PRODUCTS,
+          ...REGIONAL_MOCK_PRODUCTS,
+        ].find(
+          (p) =>
             p.slug === params.slug ||
-            String(p.id) === params.slug
+            p.id === params.slug
         );
 
-        console.log("FOUND PRODUCT:", JSON.stringify(found, null, 2));
+        if (regionalProduct) {
+          setProduct({
+            id: regionalProduct.id,
+            slug: regionalProduct.slug,
+            name: regionalProduct.title,
+            title: regionalProduct.title,
+            description: `${regionalProduct.title} sourced from ${regionalProduct.seller.name}.`,
+            price: `${regionalProduct.currency} ${regionalProduct.price.toLocaleString()} / ${regionalProduct.unit}`,
+            currency: regionalProduct.currency,
+            unit: regionalProduct.unit,
+            moq: `${regionalProduct.moq} ${regionalProduct.unit}`,
+            leadTime: regionalProduct.deliveryTime,
+            deliveryTime: regionalProduct.deliveryTime,
+            image: regionalProduct.image,
+            gallery: regionalProduct.gallery || [regionalProduct.image],
+            supplierName: regionalProduct.seller.name,
+            country: regionalProduct.seller.location,
+            industry: regionalProduct.category,
+            category: regionalProduct.category,
+            subcategory: regionalProduct.subcategory,
+            region: regionalProduct.region,
+            rating: regionalProduct.rating,
+            reviewCount: regionalProduct.reviewCount,
+            inStock: regionalProduct.inStock,
+            stockQuantity: regionalProduct.stockQuantity,
+            verified: regionalProduct.seller.verified,
+            tradeAssurance: regionalProduct.tradeAssurance,
+            seller: regionalProduct.seller,
+            attributes: regionalProduct.attributes,
+            specs: [
+              {
+                label: "Supplier",
+                value: regionalProduct.seller.name,
+              },
+              {
+                label: "Origin Country",
+                value: regionalProduct.seller.location,
+              },
+              {
+                label: "Category",
+                value: regionalProduct.category,
+              },
+              {
+                label: "Sub Category",
+                value: regionalProduct.subcategory,
+              },
+              {
+                label: "Minimum Order",
+                value: `${regionalProduct.moq} ${regionalProduct.unit}`,
+              },
+              {
+                label: "Stock Available",
+                value: `${regionalProduct.stockQuantity} units`,
+              },
+              ...Object.entries(regionalProduct.attributes).map(
+                ([label, value]) => ({
+                  label,
+                  value,
+                })
+              ),
+            ],
+          });
+
+          console.log(
+            "FOUND REGIONAL PRODUCT:",
+            regionalProduct
+          );
+
+          return;
+        }
+
+        // 2. If not a regional product, check database products
+        const response = await apiRequest("/product");
+        const products = response.data || response;
+
+        // 2. If not a regional product, check database product by slug
+        const found = await apiRequest(
+          `/product/slug/${params.slug}`
+        );
+
+        console.log(
+          "FOUND DATABASE PRODUCT:",
+          JSON.stringify(found, null, 2)
+        );
+
+        console.log(
+          "FOUND DATABASE PRODUCT:",
+          JSON.stringify(found, null, 2)
+        );
 
         if (!found) {
           setProduct(null);
           return;
         }
 
+        // 3. Format database product
         setProduct({
           ...found,
-
           slug: found.slug || String(found.id),
-
-          industry: found.category?.name || "General",
-
+          name: found.name || found.title || "Unnamed Product",
+          title: found.title || found.name || "Unnamed Product",
+          industry:
+            found.category?.name ||
+            found.category ||
+            "General",
           supplierName:
-            found.vendor?.companyName || "Unknown Supplier",
+            found.vendor?.companyName ||
+            found.supplier?.name ||
+            "Unknown Supplier",
+
+          supplierSlug:
+            found.vendor?.companyName
+              ?.toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, ""),
 
           country:
-            found.vendor?.country || "Pakistan",
-
+            found.vendor?.country ||
+            found.supplier?.country ||
+            "Pakistan",
           image:
+            PRODUCT_IMAGES[found.slug] ||
             found.image ||
             "https://picsum.photos/600/600",
-
           leadTime:
             found.leadTime ||
+            found.deliveryTime ||
             "15 - 30 Days",
-
           moq:
             found.moq ||
             "Negotiable",
-
           specs: [
             {
               label: "Brand",
@@ -342,7 +568,8 @@ export default function ProductDetail({
             },
             {
               label: "Model Number",
-              value: found.modelNumber || "Not Specified",
+              value:
+                found.modelNumber || "Not Specified",
             },
             {
               label: "Stock Available",
@@ -350,19 +577,25 @@ export default function ProductDetail({
             },
             {
               label: "Category",
-              value: found.category?.name || "General",
+              value:
+                found.category?.name ||
+                found.category ||
+                "General",
             },
             {
               label: "Sub Category",
-              value: found.subCategory?.name || "General",
+              value:
+                found.subCategory?.name ||
+                found.subcategory?.name ||
+                found.subCategory ||
+                found.subcategory ||
+                "General",
             },
           ],
         });
-
-
-        // setProduct(found);
       } catch (err) {
-        console.error(err);
+        console.error("FETCH PRODUCT FAILED:", err);
+        setProduct(null);
       } finally {
         setLoading(false);
       }
@@ -561,7 +794,18 @@ export default function ProductDetail({
 
               {(product.supplierName || product.country) && (
                 <p className="mt-3 text-[11px] sm:text-xs font-mono text-smoke uppercase tracking-wider break-words">
-                  Supplier: {product.supplierName} {product.country ? `(${product.country})` : ""}
+                  Supplier:{" "}
+                  {product.supplierName ? (
+                    <Link
+                      href={`/store/${product.supplierSlug || "test-seller-store"}`}
+                      className="text-ink hover:underline transition-colors"
+                    >
+                      {product.supplierName}
+                    </Link>
+                  ) : (
+                    "Unknown Supplier"
+                  )}
+                  {product.country ? ` (${product.country})` : ""}
                 </p>
               )}
 

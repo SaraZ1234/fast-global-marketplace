@@ -110,19 +110,33 @@ export const sellerFeatures = [
 ];
 
 export const marketplaceFeatures = [
-  "AI Product Search",
+
+  "Product Search",
+
   "Smart Recommendations",
+
   "Voice Search",
+
   "Image Search",
+
   "Product Comparison",
+
   "Reviews & Ratings",
+
   "Wishlist",
+
   "Coupons",
+
   "Flash Sales",
+
   "Auctions",
+
   "Negotiation",
+
   "Live Streaming",
+
   "Chat System",
+
 ];
 
 export const logisticsItems = [
@@ -231,16 +245,27 @@ export const supportChannels = [
 ];
 
 export const whyChooseUs = [
+
   "Millions of Products",
+
   "Thousands of Verified Suppliers",
+
   "Global Shipping",
+
   "Competitive Prices",
+
   "Fast Delivery",
+
   "Safe Payments",
+
   "Secure Trading",
+
   "Professional Customer Support",
+
   "Business Growth Tools",
-  "AI-Powered Marketplace",
+
+  "Powerful Marketplace",
+
 ];
 
 export const faqs = [

@@ -68,6 +68,7 @@ export default function SalesTab({ orders, revenueHistory, onRequestPayout }: Sa
         share: (v.revenue / totalRevenue) * 100,
       }))
       .sort((a, b) => b.revenue - a.revenue)
+      
       .slice(0, 6);
 
     return {

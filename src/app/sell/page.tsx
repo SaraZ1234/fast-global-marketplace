@@ -1,111 +1,110 @@
-import type { Metadata } from "next";
-import { ArrowUpRight } from "lucide-react";
-import Reveal from "@/components/Reveal";
-import { PageHero, SectionHeading, FeatureRow, PrimaryButton, StatBlock } from "@/components/UI";
-import { sellerFeatures } from "@/lib/data";
+"use client";
 
-export const metadata: Metadata = { title: "Become a Seller" };
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Globe2, ShieldCheck, TrendingUp, Wallet, ArrowRight } from "lucide-react";
+import { useSellerStore } from "@/lib/sellerStore";
 
-const steps = [
-  { step: "01", title: "Register", body: "Create your account and select your primary industry." },
-  { step: "02", title: "Verify", body: "Complete business verification and KYC to earn your badge." },
-  { step: "03", title: "List", body: "Build your company profile and upload your product catalog." },
-  { step: "04", title: "Sell", body: "Receive RFQs and orders from buyers around the world." },
+const BENEFITS = [
+  {
+    icon: Globe2,
+    title: "Reach three marketplaces",
+    description: "List once and choose International, Pakistan, or Gulf buyers — or all three.",
+  },
+  {
+    icon: Wallet,
+    title: "No listing fees to start",
+    description: "Publish your first products without any upfront cost while you get set up.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verified seller badge",
+    description: "Complete your profile to earn a trust badge buyers look for before ordering.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Simple dashboard",
+    description: "Track views, manage drafts, and see what's sold — all from one place.",
+  },
 ];
 
-export default function SellPage() {
+export default function BecomeASellerPage() {
+  const { isSellerOnboarded, hydrated } = useSellerStore();
+  const ctaHref = hydrated && isSellerOnboarded ? "/seller/dashboard" : "/sell/register";
+
   return (
-    <div className="overflow-x-hidden">
-      <PageHero
-        kicker="Become a Seller"
-        title="Put your catalog in front of global buyers."
-        description="List once and reach B2B and B2C buyers across 190 countries, with tools for inventory, orders, and advertising built in."
-      />
-
-      <section className="border-b border-line bg-bone">
-        <div className="container-x py-10 sm:py-14 md:py-16">
-          <Reveal>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:divide-x md:divide-line">
-              <div className="md:pl-8 first:md:pl-0">
-                <StatBlock value="182K+" label="Active Sellers" />
-              </div>
-              <div className="md:pl-8">
-                <StatBlock value="9.6M" label="Live Listings" />
-              </div>
-              <div className="md:pl-8">
-                <StatBlock value="64.2K" label="Monthly RFQs" />
-              </div>
-              <div className="md:pl-8">
-                <StatBlock value="190" label="Buyer Countries" />
-              </div>
-            </div>
-          </Reveal>
+    <div className="bg-paper text-ink min-h-screen">
+      <section className="relative border-b border-line overflow-hidden py-16 sm:py-24">
+        <div className="absolute inset-0 grid-paper opacity-[0.035] pointer-events-none" />
+        <div className="container-x relative max-w-3xl">
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="text-xs font-mono uppercase tracking-widest text-ash"
+          >
+            Sell on our marketplaces
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.05 }}
+            className="mt-3 font-display font-bold text-4xl sm:text-6xl tracking-tightest"
+          >
+            Turn your inventory into orders
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mt-4 text-ash text-base sm:text-lg max-w-xl leading-relaxed"
+          >
+            Set up a seller profile in minutes, list your first product, and choose which of our
+            marketplaces should see it.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="mt-8"
+          >
+            <Link
+              href={ctaHref}
+              className="inline-flex items-center gap-2 bg-ink text-paper px-6 py-3.5 text-sm font-mono uppercase tracking-wider hover:bg-ash transition-colors"
+            >
+              Start Selling <ArrowRight size={16} />
+            </Link>
+          </motion.div>
         </div>
       </section>
 
-      <section className="border-b border-line bg-bone">
-        <div className="container-x py-12 sm:py-16 md:py-24">
-          <SectionHeading eyebrow="Onboarding" title="Four steps to your first order." />
-          <div className="mt-10 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line">
-            {steps.map((s, i) => (
-              <Reveal key={s.step} delay={i * 0.05}>
-                <div className="relative bg-paper p-6 sm:p-7 h-full transition-colors duration-300 hover:bg-bone">
-                  <span className="idx text-xs text-smoke">{s.step}</span>
-                  <h3 className="mt-4 font-display font-semibold text-base sm:text-lg">
-                    {s.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-ash leading-relaxed">{s.body}</p>
-                  {i < steps.length - 1 && (
-                    <span
-                      aria-hidden
-                      className="hidden lg:block absolute top-6 right-0 translate-x-1/2 text-smoke/40 text-lg font-display"
-                    >
-                      →
-                    </span>
-                  )}
-                </div>
-              </Reveal>
-            ))}
+      <section className="container-x py-14 sm:py-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-line border border-line max-w-4xl">
+          {BENEFITS.map((benefit) => {
+            const Icon = benefit.icon;
+            return (
+              <div key={benefit.title} className="bg-paper p-6 sm:p-7">
+                <Icon size={22} className="text-ink mb-3" />
+                <h3 className="font-display font-semibold text-base">{benefit.title}</h3>
+                <p className="text-sm text-ash mt-1.5 leading-relaxed">{benefit.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="container-x pb-16 sm:pb-24">
+        <div className="border border-line bg-bone p-8 sm:p-10 max-w-4xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+          <div>
+            <h2 className="font-display font-semibold text-xl">Ready to list your first product?</h2>
+            <p className="text-ash text-sm mt-1">It takes about five minutes to set up your seller profile.</p>
           </div>
-        </div>
-      </section>
-
-      <section className="border-b border-line bg-paper">
-        <div className="container-x py-12 sm:py-16 md:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-14 items-start">
-            <Reveal>
-              <SectionHeading
-                eyebrow="Seller Toolkit"
-                title="Everything you need to run your storefront."
-              />
-            </Reveal>
-            <Reveal delay={0.1}>
-              <ul>
-                {sellerFeatures.map((f) => (
-                  <FeatureRow key={f} label={f} />
-                ))}
-              </ul>
-            </Reveal>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative bg-paper overflow-hidden">
-        <div
-          aria-hidden
-          className="motion-safe:animate-pulse pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-ink/[0.06] blur-3xl"
-        />
-        <div className="container-x relative py-14 sm:py-20 md:py-24 text-center">
-          <Reveal>
-            <h2 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl tracking-tightest">
-              List your first product today.
-            </h2>
-            <div className="mt-7 sm:mt-9 flex justify-center gap-4">
-              <PrimaryButton href="/pricing" icon={ArrowUpRight}>
-                View Membership Plans
-              </PrimaryButton>
-            </div>
-          </Reveal>
+          <Link
+            href={ctaHref}
+            className="shrink-0 inline-flex items-center gap-2 bg-ink text-paper px-5 py-3 text-xs font-mono uppercase tracking-wider hover:bg-ash transition-colors"
+          >
+            Get Started <ArrowRight size={14} />
+          </Link>
         </div>
       </section>
     </div>

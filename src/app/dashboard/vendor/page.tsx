@@ -303,7 +303,9 @@ export default function VendorDashboardPage() {
   }
 
   return (
-    <DashboardShell>
+  <>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
         <div>
@@ -380,22 +382,28 @@ export default function VendorDashboardPage() {
       <div className="flex items-center gap-1 border-b border-line mb-6 sm:mb-8 overflow-x-auto">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
+
           return (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`relative inline-flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${isActive ? "text-ink" : "text-smoke hover:text-ash"
-                }`}
+              className={`relative inline-flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                isActive
+                  ? "text-ink"
+                  : "text-smoke hover:text-ash"
+              }`}
             >
               <tab.icon size={15} />
               {tab.label}
+
               {tab.key === "inquiries" &&
                 inquiries.filter((i) => i.status === "Unread").length > 0 && (
                   <span className="w-4 h-4 rounded-full bg-ink text-paper text-[9px] font-mono flex items-center justify-center">
                     {inquiries.filter((i) => i.status === "Unread").length}
                   </span>
                 )}
+
               {isActive && (
                 <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-ink" />
               )}
@@ -425,7 +433,10 @@ export default function VendorDashboardPage() {
       )}
 
       {activeTab === "orders" && (
-        <OrdersTab orders={orders} onStatusChange={handleOrderStatusChange} />
+        <OrdersTab
+          orders={orders}
+          onStatusChange={handleOrderStatusChange}
+        />
       )}
 
       {activeTab === "sales" && (
@@ -437,7 +448,10 @@ export default function VendorDashboardPage() {
       )}
 
       {activeTab === "inquiries" && (
-        <InquiriesTab inquiries={inquiries} onReply={handleInquiryReply} />
+        <InquiriesTab
+          inquiries={inquiries}
+          onReply={handleInquiryReply}
+        />
       )}
 
       <style jsx global>{`
@@ -449,6 +463,7 @@ export default function VendorDashboardPage() {
             opacity: 1;
           }
         }
+
         @keyframes fadeUp {
           from {
             opacity: 0;
@@ -460,6 +475,8 @@ export default function VendorDashboardPage() {
           }
         }
       `}</style>
-    </DashboardShell>
-  );
+
+    </div>
+  </>
+);
 }
